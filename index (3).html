@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft服务器状态面板</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script src="https://list.mczfw.cn/mczfw.js" async></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #e9ecef;
+            color: #343a40;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .server-panel {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 650px;
+            overflow: hidden;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .server-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            margin-right: 20px;
+            background-color: #ced4da;
+            object-fit: cover;
+        }
+        
+        .server-icon[logo="fishp.9666.fun:22901"] {
+            font-size: 0;
+        }
+
+        .header-info {
+            flex-grow: 1;
+        }
+
+        .server-address {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin: 0;
+            color: #212529;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9em;
+            margin-top: 8px;
+        }
+
+        .status-badge.online {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.offline {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-badge.loading {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .status-badge i {
+            margin-right: 6px;
+        }
+
+        .info-grid {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .info-item .icon {
+            font-size: 1.8em;
+            color: #007bff;
+            margin-right: 15px;
+            width: 40px;
+            text-align: center;
+        }
+        
+        .info-item-content h4 {
+            margin: 0 0 4px 0;
+            color: #495057;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+
+        .info-item-content p {
+            margin: 0;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #212529;
+        }
+
+        .motd-container {
+            padding: 0 20px 20px;
+        }
+        
+        .motd {
+            background-color: #212529;
+            color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            text-align: left;
+            border: 1px solid #343a40;
+        }
+        
+        .motd h4 {
+            margin: 0 0 10px 0;
+            border-bottom: 1px solid #495057;
+            padding-bottom: 10px;
+            color: #adb5bd;
+        }
+
+        .news-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 650px;
+            margin-top: 20px;
+            padding: 20px;
+        }
+
+        .news-container h3 {
+            margin-top: 0;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 10px;
+            color: #212529;
+        }
+
+        .news-container p,
+        .news-container li,
+        .news-container blockquote {
+            color: #495057;
+        }
+
+        .news-container blockquote {
+            border-left: 4px solid #007bff;
+            padding-left: 10px;
+            margin: 10px 0;
+            color: #6c757d;
+        }
+
+        .api-indicator {
+            font-size: 0.75em;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="server-panel">
+        <div class="header">
+            <span class="server-icon" logo="fishp.9666.fun:22901"></span>
+            
+            <div class="header-info">
+                <p class="server-address">fishp.9666.fun:22901</p>
+                <div id="status-display" class="status-badge loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>查询中...</span>
+                </div>
+                <div id="api-indicator" class="api-indicator"></div>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <i class="fas fa-users icon"></i>
+                <div class="info-item-content">
+                    <h4>在线玩家</h4>
+                    <p><span ip="fishp.9666.fun:22901" id="players-count">查询中</span></p>
+                </div>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-signal icon"></i>
+                <div class="info-item-content">
+                    <h4>网络延迟</h4>
+                    <p><span ping="fishp.9666.fun:22901" id="ping-value">查询中</span> ms</p>
+                </div>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-map-marker-alt icon"></i>
+                <div class="info-item-content">
+                    <h4>服务器位置</h4>
+                    <p><span city="fishp.9666.fun:22901" id="location-info">查询中</span></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="motd-container">
+            <div class="motd">
+                 <h4>服务器信息 (MOTD)</h4>
+                 <span motd="fishp.9666.fun:22901" id="motd-content">查询中...</span>
+            </div>
+        </div>
+
+    </div>
+    
+    <script>
+        // 配置
+        const SERVER_FULL_ADDRESS = 'fishp.9666.fun:22901';
+        const [SERVER_HOST, SERVER_PORT] = SERVER_FULL_ADDRESS.split(':');
+        const BACKUP_API = 'https://api.wer.plus/api/mcse';
+        const PRIMARY_TIMEOUT = 8000; // 主API超时时间（毫秒）
+        
+        let backupAPIUsed = false;
+        let primaryAPIFailed = false;
+
+        // 备用API查询函数
+        async function queryBackupAPI() {
+            try {
+                console.log('正在使用备用API查询服务器状态...');
+                const url = `${BACKUP_API}?host=${SERVER_HOST}&port=${SERVER_PORT}`;
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (result.code === 200 && result.data) {
+                    return result.data;
+                } else {
+                    console.error('备用API返回错误:', result.msg);
+                    return null;
+                }
+            } catch (error) {
+                console.error('备用API查询失败:', error);
+                return null;
+            }
+        }
+
+        // 更新页面显示
+        function updateDisplay(data) {
+            const statusDisplay = document.getElementById('status-display');
+            const apiIndicator = document.getElementById('api-indicator');
+            const playersCount = document.getElementById('players-count');
+            const pingValue = document.getElementById('ping-value');
+            const locationInfo = document.getElementById('location-info');
+            const motdContent = document.getElementById('motd-content');
+            const serverIcon = document.querySelector('.server-icon');
+
+            // 更新状态标识
+            statusDisplay.className = 'status-badge online';
+            statusDisplay.innerHTML = `<i class="fas fa-check-circle"></i><span>在线</span>`;
+            
+            if (backupAPIUsed) {
+                apiIndicator.textContent = '📡 使用备用API查询';
+            }
+
+            // 更新在线玩家
+            if (data.onl_l !== undefined && data.max_l !== undefined) {
+                playersCount.textContent = `${data.onl_l} / ${data.max_l}`;
+            }
+
+            // 更新延迟
+            if (data.serv_ping !== undefined && data.serv_ping !== null) {
+                pingValue.textContent = data.serv_ping;
+            }
+
+            // 更新服务器图标
+            if (data.serv_ico && serverIcon.tagName === 'SPAN') {
+                const img = document.createElement('img');
+                img.src = data.serv_ico;
+                img.className = 'server-icon';
+                img.alt = 'Server Icon';
+                serverIcon.replaceWith(img);
+            }
+
+            // 更新MOTD
+            if (data.serv_name) {
+                motdContent.textContent = data.serv_name;
+                if (data.serv_ver) {
+                    motdContent.textContent += `\n版本: ${data.serv_ver}`;
+                }
+            }
+
+            // 注意：备用API可能不提供位置信息
+            // 如果需要位置信息，可能需要保留原API的监听或使用其他方式
+        }
+
+        // 显示离线状态
+        function showOfflineStatus(reason = '离线') {
+            const statusDisplay = document.getElementById('status-display');
+            const apiIndicator = document.getElementById('api-indicator');
+            
+            statusDisplay.className = 'status-badge offline';
+            statusDisplay.innerHTML = `<i class="fas fa-times-circle"></i><span>${reason}</span>`;
+            
+            if (backupAPIUsed) {
+                apiIndicator.textContent = '📡 备用API也无法连接';
+            }
+        }
+
+        // 主监控逻辑
+        document.addEventListener('DOMContentLoaded', () => {
+            const onlinePlayersSpan = document.querySelector(`span[ip="${SERVER_FULL_ADDRESS}"]`);
+
+            if (!onlinePlayersSpan) {
+                console.error('无法找到用于监控的 span 元素。');
+                return;
+            }
+
+            let statusUpdated = false;
+
+            // 监控主API（mczfw.js）
+            const observer = new MutationObserver((mutationsList) => {
+                for(let mutation of mutationsList) {
+                    if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                        const content = onlinePlayersSpan.textContent.trim();
+                        
+                        if (content.includes('/') && !content.includes('查询中')) {
+                            // 主API成功返回数据
+                            const statusDisplay = document.getElementById('status-display');
+                            statusDisplay.className = 'status-badge online';
+                            statusDisplay.innerHTML = `<i class="fas fa-check-circle"></i><span>在线</span>`;
+                            statusUpdated = true;
+                            observer.disconnect();
+                        } else if (content === '离线' || content.includes('错误')) {
+                            // 主API返回离线
+                            primaryAPIFailed = true;
+                            observer.disconnect();
+                            // 尝试备用API
+                            tryBackupAPI();
+                        }
+                    }
+                }
+            });
+
+            const config = { childList: true, subtree: true, characterData: true };
+            observer.observe(onlinePlayersSpan, config);
+            
+            // 主API超时处理
+            setTimeout(() => {
+                if (!statusUpdated && !primaryAPIFailed) {
+                    console.log('主API超时，切换到备用API...');
+                    observer.disconnect();
+                    tryBackupAPI();
+                }
+            }, PRIMARY_TIMEOUT);
+
+            // 尝试使用备用API
+            async function tryBackupAPI() {
+                backupAPIUsed = true;
+                const data = await queryBackupAPI();
+                
+                if (data) {
+                    updateDisplay(data);
+                } else {
+                    showOfflineStatus('无法连接');
+                }
+            }
+        });
+    </script>
+
+    <!-- 资讯栏 -->
+    <div id="news-section" class="news-container">
+        <h3>📢 最新资讯</h3>
+        <div id="news-content"></div>
+    </div>
+
+    <!-- 引入 marked.js 用于渲染 Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        // 示例 Markdown 内容
+        const markdownNews = `
+### 📰 服务器公告
+- 欢迎来到 **FishP 服务器**！
+- 新增 *生存模式副本*，快来挑战吧！
+- 更新日期：**2025-10-07**
+
+> 有任何问题请加入QQ群：123456789
+        `;
+
+        // 渲染 Markdown
+        document.getElementById("news-content").innerHTML = marked.parse(markdownNews);
+    </script>
+
+</body>
+</html>
