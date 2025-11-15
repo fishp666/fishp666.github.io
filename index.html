@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多功能搜索 V3.7 (引擎扩充)</title>
+    <title>多功能搜索 V3.8 (智能菜单优化)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     
     <style>
@@ -14,7 +14,7 @@
             100% { background-position: 0% 50%; }
         }
 
-        。main-title {
+        .main-title {
             font-size: clamp(2.5rem, 8vw, 4rem);
             font-weight: 800;
             color: white;
@@ -24,7 +24,7 @@
             cursor: default;
         }
 
-        。animated-gradient {
+        .animated-gradient {
             background: linear-gradient(90deg, 
                 #ff00de, #ff7f00, #ffff00, #00ff00, #00ffff, #007fff, #8b00ff);
             background-size: 400% 400%;
@@ -221,6 +221,7 @@
             transform: translateY(-10px) scale(0.95);
             transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             pointer-events: none;
+            /* max-height is now set by JS, but this is a fallback */
             max-height: calc(100vh - 220px);
             overflow-y: auto;
         }
@@ -390,6 +391,7 @@
             transform: translateY(-10px) scale(0.95);
             transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             pointer-events: none;
+            /* max-height is now set by JS, but this is a fallback */
             max-height: calc(100vh - 220px);
         }
         
@@ -632,26 +634,26 @@
                 gap: 6px;
             }
             #search-form,
-            .custom-select-trigger,
-            #search-input,
+            。custom-select-trigger,
+            #search-input，
             #search-button {
                 height: 48px;
             }
             #search-button { width: 48px; }
-            .custom-select-trigger { min-width: auto; padding: 0 12px; gap: 8px; }
-            .custom-select-trigger span { font-size: 14px; }
-            .custom-select-trigger img { width: 20px; height: 20px; }
+            。custom-select-trigger { min-width: auto; padding: 0 12px; gap: 8px; }
+            。custom-select-trigger span { font-size: 14px; }
+            。custom-select-trigger img { width: 20px; height: 20px; }
             #search-input { padding: 0 15px; font-size: 15px; }
-            .menu-items { grid-template-columns: 1fr; }
-            .top-right-tools { top: 10px; right: 10px; }
-            .tool-btn { width: 45px; height: 45px; font-size: 16px; }
+            。menu-items { grid-template-columns: 1fr; }
+            。top-right-tools { top: 10px; right: 10px; }
+            。tool-btn { width: 45px; height: 45px; font-size: 16px; }
         }
     </style>
 </head>
 <body>
 
     <div class="main-title">
-        <span class="animated-gradient">Wolfe</span>の导航
+        <span class="animated-gradient">Wolfe</span>の主页
     </div>
 
     <div class="main-container">
@@ -897,15 +899,36 @@
             currentSearchUrlTemplate = urlTemplate;
             const searchInput = document.getElementById('search-input');
             if (name === "Wolfram|Alpha") {
-                searchInput.placeholder = '使用LaTex语法进行计算...';
+                searchInput.placeholder = '请使用LaTex语法进行搜索';
             } else {
                 const activeTab = document.querySelector('.tab-btn.active span');
                 searchInput.placeholder = `输入${activeTab ? activeTab.textContent : '搜索'}内容...`;
             }
         }
+        
+        // --- NEW: Function to dynamically adjust menu height ---
+        function adjustDropdownHeight(menuElement, anchorElement) {
+            const anchorRect = anchorElement.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - anchorRect.bottom;
+            const margin = 20; // Margin from the bottom of the viewport
+            menuElement.style.maxHeight = `${spaceBelow - margin}px`;
+        }
 
         function closeDropdown() { document.getElementById('custom-select-container').classList.remove('open'); }
-        function toggleDropdown() { document.getElementById('custom-select-container').classList.toggle('open'); }
+        
+        // --- MODIFIED: Enhanced toggle function ---
+        function toggleDropdown() { 
+            const container = document.getElementById('custom-select-container');
+            const isOpen = container.classList.toggle('open');
+            if (isOpen) {
+                // Adjust height after the menu is made visible in the DOM
+                requestAnimationFrame(() => {
+                    const menu = document.getElementById('custom-select-options');
+                    const trigger = document.getElementById('custom-select-trigger');
+                    adjustDropdownHeight(menu, trigger);
+                });
+            }
+        }
 
         function generateMoreMenuItems() {
             const aggregatorContainer = document.getElementById('aggregator-menu-items');
@@ -924,7 +947,22 @@
         }
 
         function closeMoreMenu() { document.getElementById('more-dropdown').classList.remove('open'); }
-        function toggleMoreMenu() { document.getElementById('more-dropdown').classList.toggle('open'); }
+        
+        // --- MODIFIED: Enhanced toggle function ---
+        function toggleMoreMenu() { 
+            const dropdown = document.getElementById('more-dropdown');
+            const isOpen = dropdown.classList.toggle('open');
+            if (isOpen) {
+                requestAnimationFrame(() => {
+                    const menu = document.getElementById('more-menu');
+                    // On mobile, the anchor is the whole tab container due to CSS positioning
+                    const anchor = window.innerWidth <= 768 
+                        ? document.getElementById('tabs-container') 
+                        : document.getElementById('more-btn');
+                    adjustDropdownHeight(menu, anchor);
+                });
+            }
+        }
 
         function setupBackgroundCustomizer() {
             const panel = document.createElement('div');
@@ -936,9 +974,9 @@
                 </div>
                 <div class="panel-body">
                     <div class="bg-option">
-                        <label for="bg-image-url">图床链接</label>
+                        <label for="bg-image-url">图片链接</label>
                         <div class="input-with-btn">
-                            <input type="text" id="bg-image-url" placeholder="在此粘贴图床URL...">
+                            <input type="text" id="bg-image-url" placeholder="粘贴图片URL">
                             <button class="apply-btn" id="bg-image-apply">应用</button>
                         </div>
                     </div>
@@ -1087,6 +1125,22 @@
                 if (e.key >= '1' && e.key <= '7' && !e.ctrlKey && !e.metaKey && document.activeElement !== searchInput) {
                     const tab = document.querySelectorAll('.tab-btn[data-category]')[parseInt(e.key) - 1];
                     if (tab) tab.click();
+                }
+            });
+            
+            // --- NEW: Recalculate menu height on window resize ---
+            window.addEventListener('resize', () => {
+                if (selectContainer.classList.contains('open')) {
+                    const menu = document.getElementById('custom-select-options');
+                    const trigger = document.getElementById('custom-select-trigger');
+                    adjustDropdownHeight(menu, trigger);
+                }
+                if (moreDropdown.classList.contains('open')) {
+                     const menu = document.getElementById('more-menu');
+                    const anchor = window.innerWidth <= 768 
+                        ? document.getElementById('tabs-container') 
+                        : document.getElementById('more-btn');
+                    adjustDropdownHeight(menu, anchor);
                 }
             });
 
