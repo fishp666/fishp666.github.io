@@ -651,7 +651,7 @@
 <body>
 
     <div class="main-title">
-        <span class="animated-gradient">Fishp</span> Homepage
+        <span class="animated-gradient">Wolfe</span>の导航
     </div>
 
     <div class="main-container">
@@ -897,7 +897,7 @@
             currentSearchUrlTemplate = urlTemplate;
             const searchInput = document.getElementById('search-input');
             if (name === "Wolfram|Alpha") {
-                searchInput.placeholder = '请使用LaTex语法进行搜索';
+                searchInput.placeholder = '使用LaTex语法进行计算...';
             } else {
                 const activeTab = document.querySelector('.tab-btn.active span');
                 searchInput.placeholder = `输入${activeTab ? activeTab.textContent : '搜索'}内容...`;
@@ -936,9 +936,9 @@
                 </div>
                 <div class="panel-body">
                     <div class="bg-option">
-                        <label for="bg-image-url">图片链接</label>
+                        <label for="bg-image-url">图床链接</label>
                         <div class="input-with-btn">
-                            <input type="text" id="bg-image-url" placeholder="粘贴图片URL">
+                            <input type="text" id="bg-image-url" placeholder="在此粘贴图床URL...">
                             <button class="apply-btn" id="bg-image-apply">应用</button>
                         </div>
                     </div>
