@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wolfeの主页！</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <style>
+        /* --- 渐变动画标题 --- */
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .main-title {
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-weight: 800;
+            color: white;
+            text-align: center;
+            margin-bottom: 25px;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            cursor: default;
+        }
+
+        .animated-gradient {
+            background: linear-gradient(90deg, 
+                #ff00de, #ff7f00, #ffff00, #00ff00, #00ffff, #007fff, #8b00ff);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradient-animation 8s ease infinite;
+        }
+
+        /* --- 1. CSS变量系统 --- */
+        :root {
+            --primary-color: #007AFF;
+            --secondary-color: #5856D6;
+            --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --text-color: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-light: rgba(255, 255, 255, 0.9);
+            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.15);
+            --shadow-medium: 0 8px 32px rgba(31, 38, 135, 0.25);
+            --border-radius: 16px;
+            --border-radius-large: 20px;
+            
+            --menu-bg: rgba(255, 255, 255, 0.98);
+            --menu-text-color: #333;
+            --menu-hover-bg: rgba(0, 122, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+            background-color: #667eea; /* Fallback */
+            background-image: var(--background-gradient);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+            transition: background 0.5s ease-in-out, color 0.3s ease;
+        }
+
+        /* 主容器 */
+        .main-container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* 玻璃效果容器 */
+        .glass-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-large);
+            box-shadow: var(--shadow-light);
+            padding: 30px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .glass-container:hover {
+            box-shadow: var(--shadow-medium);
+            transform: translateY(-2px);
+        }
+
+        /* --- 2. 顶部Tab按钮 --- */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 30px;
+            padding: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 60;
+            flex-wrap: wrap; /* 允许换行 */
+        }
+
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            background: transparent;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover::before { opacity: 1; }
+
+        .tab-btn.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary-color);
+            box-shadow: 0 4px 20px rgba(0, 122, 255, 0.3);
+        }
+
+        .tab-btn i {
+            font-size: 16px;
+            width: 18px;
+            text-align: center;
+        }
+
+        /* 更多菜单样式 */
+        .more-dropdown { position: relative; } /* 在桌面端，此为定位参照物 */
+
+        .more-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            background: transparent;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .more-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .more-btn:hover::before { opacity: 1; }
+
+        .more-btn i {
+            font-size: 16px;
+            width: 18px;
+            text-align: center;
+        }
+
+        .more-btn .caret {
+            font-size: 12px;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .more-dropdown.open .caret { transform: rotate(180deg); }
+
+        .more-menu {
+            position: absolute;
+            top: calc(100% + 12px);
+            right: 0;
+            z-index: 1000;
+            min-width: 300px;
+            background: var(--menu-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            padding: 12px;
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            pointer-events: none;
+            /* max-height is now set by JS, but this is a fallback */
+            max-height: calc(100vh - 220px);
+            overflow-y: auto;
+        }
+
+        .more-dropdown.open .more-menu {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .menu-category { margin-bottom: 16px; }
+        .menu-category:last-child { margin-bottom: 0; }
+
+        .menu-category-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 8px;
+        }
+
+        .menu-category-title i {
+            color: var(--primary-color);
+            font-size: 12px;
+        }
+
+        .menu-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 6px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--menu-text-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .menu-item:hover {
+            background: var(--menu-hover-bg);
+            transform: translateX(2px);
+        }
+
+        .menu-item img {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .menu-item span {
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 点击涟漪效果 */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        }
+        @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+        /* --- 3. 搜索表单 --- */
+        #search-form {
+            display: flex;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: all 0.3s ease;
+            overflow: visible;
+            position: relative;
+            z-index: 50;
+        }
+        
+        #search-form:focus-within {
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.2), var(--shadow-medium);
+            transform: translateY(-1px);
+        }
+
+        /* --- 4. 自定义引擎选择器 --- */
+        .custom-select-container {
+            position: relative; 
+            flex-shrink: 0;
+            background: rgba(248, 248, 248, 0.95);
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius) 0 0 var(--border-radius);
+        }
+        
+        .custom-select-trigger {
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            height: 56px;
+            cursor: pointer;
+            gap: 10px;
+            min-width: 140px;
+            transition: all 0.2s ease;
+            border-radius: var(--border-radius) 0 0 var(--border-radius);
+        }
+
+        .custom-select-trigger:hover { background: rgba(240, 240, 240, 0.95); }
+        
+        .custom-select-trigger img {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+
+        .custom-select-trigger span {
+            font-size: 15px;
+            font-weight: 500;
+            color: #333;
+            flex-grow: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .custom-select-trigger .caret {
+            font-size: 12px;
+            color: #666;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .custom-select-container.open .caret { transform: rotate(180deg); }
+
+        /* 下拉选项 */
+        .custom-select-options {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            width: max-content;
+            min-width: 100%;
+            z-index: 1000;
+            background: var(--menu-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            padding: 8px;
+            overflow-y: auto;
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            pointer-events: none;
+            /* max-height is now set by JS, but this is a fallback */
+            max-height: calc(100vh - 220px);
+        }
+        
+        .custom-select-container.open .custom-select-options {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        /* 列表式选项项 */
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option-item:hover {
+            background: var(--menu-hover-bg);
+            transform: translateX(4px);
+        }
+
+        .option-item img {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            flex-shrink: 0;
+        }
+
+        .option-item span {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--menu-text-color);
+            flex-grow: 1;
+        }
+        
+        .option-item.selected {
+            background: rgba(0, 122, 255, 0.15);
+            color: var(--primary-color);
+        }
+        
+        .option-item.selected span { color: var(--primary-color); }
+
+        /* --- 5. 搜索输入框 --- */
+        #search-input {
+            flex-grow: 1;
+            height: 56px;
+            padding: 0 20px;
+            font-size: 16px;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #333;
+            min-width: 100px;
+        }
+        
+        #search-input::placeholder { color: #888; }
+
+        /* --- 6. 搜索按钮 --- */
+        #search-button {
+            height: 56px;
+            width: 56px;
+            flex-shrink: 0;
+            border: none;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #search-button:hover {
+            box-shadow: 0 4px 20px rgba(0, 122, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        #search-button:active { transform: scale(0.95); }
+
+        /* --- 7. 顶部工具按钮 --- */
+        .top-right-tools {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 12px;
+        }
+
+        .tool-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(20px);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .tool-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: scale(1.1);
+        }
+        
+        /* --- 9. 滚动条美化 --- */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.5); }
+
+        /* --- 10. 搜索建议样式 --- */
+        #search-suggestions {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            z-index: 999;
+            background: var(--menu-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-medium);
+            padding: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            color: var(--menu-text-color);
+        }
+
+        .suggestion-item:hover { background: var(--menu-hover-bg); }
+
+        /* --- 11. 背景设置面板 --- */
+        #panel-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 1999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        #panel-overlay.visible { opacity: 1; pointer-events: auto; }
+        #background-panel {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            width: 90%; max-width: 420px; z-index: 2000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-large);
+            box-shadow: var(--shadow-medium);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            pointer-events: none;
+        }
+        #background-panel.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--glass-border); }
+        .panel-header h3 { margin: 0; font-size: 18px; font-weight: 600; }
+        .panel-close-btn { background: transparent; border: none; font-size: 24px; line-height: 1; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+        .panel-close-btn:hover { opacity: 1; }
+        .panel-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+        .bg-option { display: flex; flex-direction: column; gap: 10px; }
+        .bg-option label { font-weight: 500; font-size: 14px; }
+        .bg-option input[type="text"] { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.5); color: #333; outline: none; transition: all 0.2s; }
+        .bg-option input[type="text"]:focus { box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); border-color: var(--primary-color); }
+        .gradient-pickers { display: flex; align-items: center; gap: 12px; }
+        .gradient-pickers span { font-size: 18px; opacity: 0.6; }
+        .bg-option input[type="color"] { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 50px; height: 30px; background-color: transparent; border: 1px solid var(--glass-border); border-radius: 6px; cursor: pointer; }
+        .bg-option input[type="color"]::-webkit-color-swatch { border-radius: 5px; border: none; }
+        .bg-option input[type="color"]::-moz-color-swatch { border-radius: 5px; border: none; }
+        .source-buttons button { flex-grow: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.5); color: var(--text-color); cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .source-buttons button:hover { background: rgba(255, 255, 255, 0.8); border-color: var(--primary-color); }
+        #background-panel .panel-header h3,
+        #background-panel .bg-option label,
+        #background-panel .panel-close-btn,
+        #background-panel .gradient-pickers span { color: rgba(255, 255, 255, 0.95); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+        .input-with-btn { display: flex; gap: 10px; align-items: center; }
+        .input-with-btn input { flex-grow: 1; }
+        .apply-btn { padding: 10px 16px; border-radius: 8px; border: none; background: var(--primary-color); color: white; font-weight: 500; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; }
+        .apply-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+        .input-with-btn .gradient-pickers { flex-grow: 1; }
+        .bg-option input[type="text"] { flex-grow: 1; }
+        
+        /* --- 8. 响应式设计 (重点优化) --- */
+        @media (max-width: 768px) {
+            body { padding: 15px; }
+            .main-title { margin-bottom: 20px; }
+            .main-container { max-width: 100%; padding: 0; gap: 20px; }
+            .glass-container { padding: 20px; }
+            
+            /* -- Tabs / More Menu Fix Starts Here -- */
+            .tabs {
+                position: relative; /* 新增：为菜单定位提供参照 */
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
+                gap: 10px;
+                padding: 8px;
+                margin-bottom: 25px;
+            }
+            .more-dropdown {
+                position: static; /* 新增：移除按钮的定位参照角色 */
+            }
+            .more-menu {
+                top: 100%; /* 新增：定位到父容器(.tabs)底部 */
+                left: 0;
+                right: 0;
+                width: 100%;
+                min-width: 0; /* 新增：重置最小宽度 */
+                margin-top: 10px; /* 新增：增加一点间距 */
+            }
+            /* -- Fix Ends Here -- */
+
+            .tab-btn, .more-btn {
+                padding: 10px 12px;
+                font-size: 14px;
+                justify-content: center;
+                gap: 6px;
+            }
+            #search-form,
+            .custom-select-trigger,
+            #search-input，
+            #search-button {
+                height: 48px;
+            }
+            #search-button { width: 48px; }
+            .custom-select-trigger { min-width: auto; padding: 0 12px; gap: 8px; }
+            .custom-select-trigger span { font-size: 14px; }
+            .custom-select-trigger img { width: 20px; height: 20px; }
+            #search-input { padding: 0 15px; font-size: 15px; }
+            .menu-items { grid-template-columns: 1fr; }
+            .top-right-tools { top: 10px; right: 10px; }
+            .tool-btn { width: 45px; height: 45px; font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-title">
+        <span class="animated-gradient">Wolfe</span>の主页！
+    </div>
+
+    <div class="main-container">
+        
+        <div class="glass-container">
+            <div class="tabs" id="tabs-container">
+                <button class="tab-btn active" data-category="search">
+                    <i class="fa-solid fa-search"></i>
+                    <span>搜索</span>
+                </button>
+                <button class="tab-btn" data-category="wiki">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span>百科</span>
+                </button>
+                <button class="tab-btn" data-category="video">
+                    <i class="fa-solid fa-video"></i>
+                    <span>视频</span>
+                </button>
+                <button class="tab-btn" data-category="music">
+                    <i class="fa-solid fa-music"></i>
+                    <span>音乐</span>
+                </button>
+                 <button class="tab-btn" data-category="social">
+                    <i class="fa-solid fa-users"></i>
+                    <span>社交</span>
+                </button>
+                <button class="tab-btn" data-category="map">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    <span>地图</span>
+                </button>
+                <button class="tab-btn" data-category="academic">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    <span>学术</span>
+                </button>
+                
+                <div class="more-dropdown" id="more-dropdown">
+                    <button class="more-btn" id="more-btn">
+                        <i class="fa-solid fa-th"></i>
+                        <span>更多</span>
+                        <i class="fa-solid fa-caret-down caret"></i>
+                    </button>
+                    
+                    <div class="more-menu" id="more-menu">
+                        <div class="menu-category">
+                            <div class="menu-category-title">
+                                <i class="fa-solid fa-layer-group"></i>
+                                <span>聚合搜索</span>
+                            </div>
+                            <div class="menu-items" id="aggregator-menu-items"></div>
+                        </div>
+                        
+                        <div class="menu-category">
+                            <div class="menu-category-title">
+                                <i class="fa-solid fa-th-large"></i>
+                                <span>拨号页</span>
+                            </div>
+                            <div class="menu-items" id="startpage-menu-items"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="search-form" autocomplete="off">
+                <div class="custom-select-container" id="custom-select-container">
+                    <div class="custom-select-trigger" id="custom-select-trigger">
+                        <img id="selected-logo" src="" alt="logo">
+                        <span id="selected-name"></span>
+                        <i class="fa-solid fa-caret-down caret"></i>
+                    </div>
+                    
+                    <div class="custom-select-options" id="custom-select-options">
+                    </div>
+                </div>
+                
+                <input type="text" id="search-input" placeholder="输入搜索内容..." required>
+                
+                <button type="submit" id="search-button" title="搜索">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                
+                <div id="search-suggestions"></div>
+            </form>
+        </div>
+
+    </div>
+
+    <div class="top-right-tools">
+        <button class="tool-btn" id="background-toggle" title="自定义背景"><i class="fa-solid fa-image"></i></button>
+    </div>
+
+    <script>
+        // --- JSONP Callback for Baidu Suggestions ---
+        window.handleBaiduSuggestion = function(data) {
+            const suggestionsContainer = document.getElementById('search-suggestions');
+            const searchInput = document.getElementById('search-input');
+            suggestionsContainer.innerHTML = '';
+            
+            if (data.s && data.s.length > 0) {
+                suggestionsContainer.style.display = 'block';
+                data.s.forEach(suggestionText => {
+                    const item = document.createElement('div');
+                    item.className = 'suggestion-item';
+                    item.textContent = suggestionText;
+                    item.addEventListener('click', () => {
+                        searchInput.value = suggestionText;
+                        suggestionsContainer.style.display = 'none';
+                        document.getElementById('search-form').dispatchEvent(new Event('submit'));
+                    });
+                    suggestionsContainer.appendChild(item);
+                });
+            } else {
+                suggestionsContainer.style.display = 'none';
+            }
+        }
+
+        // --- 1. 数据存储 ---
+        const engines = {
+            search: [
+                { name: "Google", url: "https://www.google.com/search?q=QUERY", domain: "google.com" },
+                { name: "Bing", url: "https://www.bing.com/search?q=QUERY", domain: "bing.com" },
+                { name: "百度", url: "https://www.baidu.com/s?wd=QUERY", domain: "baidu.com" },
+                { name: "360", url: "https://www.so.com/s?q=QUERY", domain: "so.com" },
+                { name: "搜狗", url: "https://www.sogou.com/web?query=QUERY", domain: "sogou.com" },
+                { name: "神马", url: "https://m.sm.cn/s?q=QUERY", domain: "sm.cn" },
+                { name: "Yandex", url: "https://yandex.com/search/?text=QUERY", domain: "yandex.com" },
+                { name: "DuckDuckGo", url: "https://duckduckgo.com/?q=QUERY", domain: "duckduckgo.com" },
+                { name: "Ecosia", url: "https://www.ecosia.org/search?q=QUERY", domain: "ecosia.org" },
+                { name: "Infospace", url: "https://infospace.com/serp?q=QUERY", domain: "infospace.com" },
+                { name: "WebCrawler Search", url: "https://www.webcrawler.com/serp?q=QUERY", domain: "webcrawler.com" }
+            ],
+            wiki: [
+                { name: "维基百科", url: "https://zh.wikipedia.org/wiki/Special:Search?search=QUERY", domain: "wikipedia.org" },
+                { name: "百度百科", url: "https://baike.baidu.com/search?word=QUERY", domain: "baidu.com" },
+                { name: "求闻百科", url: "https://www.qiuwenbaike.cn/wiki/Special:%E6%90%9C%E7%B4%A2?search=QUERY", domain: "qiuwenbaike.cn" },
+                { name: "抖音百科", url: "https://www.baike.com/search?keyword=QUERY", domain: "baike.com" },
+                { name: "搜狗百科", url: "https://www.sogou.com/sogou?query=QUERY&insite=baike.sogou.com", domain: "sogou.com" },
+                { name: "360百科", url: "https://baike.so.com/search/?q=QUERY", domain: "so.com" }
+            ],
+            video: [
+                { name: "YouTube", url: "https://www.youtube.com/results?search_query=QUERY", domain: "youtube.com" },
+                { name: "哔哩哔哩", url: "https://search.bilibili.com/all?keyword=QUERY", domain: "bilibili.com" }
+            ],
+            music: [
+                { name: "网易云音乐", url: "https://music.163.com/#/search/m/?s=QUERY", domain: "music.163.com" },
+                { name: "QQ音乐", url: "https://y.qq.com/n/ryqq/search?w=QUERY", domain: "qq.com" },
+                { name: "酷狗音乐", url: "https://www.kugou.com/yy/html/search.html#searchKeyWord=QUERY", domain: "kugou.com" },
+                { name: "酷我音乐", url: "https://www.kuwo.cn/search/list?key=QUERY", domain: "kuwo.cn" },
+                { name: "Spotify", url: "https://open.spotify.com/search/QUERY", domain: "spotify.com" },
+                { name: "SoundCloud", url: "https://soundcloud.com/search?q=QUERY", domain: "soundcloud.com" },
+                { name: "Apple Music", url: "https://music.apple.com/cn/search?term=QUERY", domain: "music.apple.com" }
+            ],
+             social: [
+                { name: "小红书", url: "https://www.xiaohongshu.com/search_result?keyword=QUERY", domain: "xiaohongshu.com" },
+                { name: "微信(搜狗)", url: "https://weixin.sogou.com/weixin?type=2&query=QUERY", domain: "sogou.com" },
+                { name: "知乎(搜狗)", url: "https://www.sogou.com/sogou?insite=zhihu.com&query=QUERY", domain: "sogou.com" },
+                { name: "豆瓣读书", url: "https://search.douban.com/book/subject_search?search_text=QUERY", domain: "douban.com" },
+                { name: "豆瓣电影", url: "https://search.douban.com/movie/subject_search?search_text=QUERY", domain: "douban.com" },
+                { name: "豆瓣音乐", url: "https://search.douban.com/music/subject_search?search_text=QUERY", domain: "douban.com" }
+            ],
+            map: [
+                { name: "百度地图", url: "https://map.baidu.com/search?word=QUERY", domain: "baidu.com" },
+                { name: "高德地图", url: "https://www.amap.com/search?query=QUERY", domain: "amap.com" },
+                { name: "腾讯地图", url: "https://map.qq.com/n/search?query=QUERY", domain: "qq.com" },
+                { name: "Google Maps", url: "https://www.google.com/maps/search/?api=1&query=QUERY", domain: "google.com" },
+                { name: "Google Earth", url: "https://earth.google.com/web/search/QUERY", domain: "google.com" },
+                { name: "OpenStreet", url: "https://www.openstreetmap.org/search?query=QUERY", domain: "openstreetmap.org" },
+                { name: "Bing Maps", url: "https://www.bing.com/maps?q=QUERY", domain: "bing.com" },
+                { name: "Yandex Maps", url: "https://yandex.com/maps/?text=QUERY", domain: "yandex.com" }
+            ],
+            academic: [
+                { name: "Google 学术", url: "https://scholar.google.com/scholar?q=QUERY", domain: "scholar.google.com" },
+                { name: "百度学术", url: "https://xueshu.baidu.com/ndscholar/browse/search?wd=QUERY", domain: "xueshu.baidu.com" },
+                { name: "Wolfram|Alpha", url: "https://www.wolframalpha.com/input?i=QUERY", domain: "wolframalpha.com" }
+            ]
+        };
+
+        const shortcuts = {
+            searchAggregators: [
+                { name: "Baidugle", url: "https://www.gobaidugle.com/", domain: "gobaidugle.com" },
+                { name: "快搜", url: "https://search.chongbuluo.com/", domain: "chongbuluo.com" },
+                { name: "查司令", url: "https://www.cha40.com/", domain: "cha40.com" },
+                { name: "多搜搜", url: "https://duososo.com/index.php", domain: "duososo.com" },
+                { name: "无追搜索", url: "https://www.wuzhuiso.com/", domain: "wuzhuiso.com" },
+                { name: "轻略搜索", url: "https://search.qinggl.com/", domain: "qinggl.com" },
+                { name: "蚂蚁网络", url: "https://www.antnw.cn/so/", domain: "antnw.cn" },
+                { name: "书签库聚合", url: "https://sou.shuqianku.com/", domain: "shuqianku.com" },
+                { name: "SOU.BEST", url: "https://sou.best/topiccn", domain: "sou.best" },
+                { name: "小不点搜索", url: "https://www.xiaoso.net/", domain: "xiaoso.net" }
+            ],
+            startPages: [
+                { name: "iTab", url: "https://www.itab.link/", domain: "itab.link" },
+                { name: "CSDN Tab", url: "https://so.csdn.net/", domain: "csdn.net" },
+                { name: "Infinity Tab", url: "https://inftab.com/", domain: "inftab.com" }
+            ]
+        };
+
+        let currentSearchUrlTemplate = '';
+
+        function createRipple(event, element) {
+            const ripple = document.createElement('span');
+            const rect = element.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = event.clientX - rect.left - size / 2;
+            const y = event.clientY - rect.top - size / 2;
+            ripple.className = 'ripple';
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            element.appendChild(ripple);
+            setTimeout(() => { ripple.remove(); }, 600);
+        }
+
+        function populateOptionsGrid(category) {
+            const selectOptions = document.getElementById('custom-select-options');
+            selectOptions.innerHTML = '';
+            const enginesList = engines[category];
+            if (!enginesList) return;
+            enginesList.forEach((engine, index) => {
+                const logoUrl = `https://www.google.com/s2/favicons?domain=${engine.domain}&sz=64`;
+                const optionItem = document.createElement('div');
+                optionItem.className = 'option-item';
+                optionItem.innerHTML = `<img src="${logoUrl}" alt="${engine.name} logo"><span>${engine.name}</span>`;
+                optionItem.dataset.url = engine.url;
+                optionItem.dataset.name = engine.name;
+                optionItem.dataset.logo = logoUrl;
+                optionItem.addEventListener('click', () => {
+                    updateSelectedEngine(engine.name, logoUrl, engine.url);
+                    closeDropdown();
+                    selectOptions.querySelectorAll('.option-item').forEach(item => item.classList.remove('selected'));
+                    optionItem.classList.add('selected');
+                });
+                selectOptions.appendChild(optionItem);
+                if (index === 0) {
+                    updateSelectedEngine(engine.name, logoUrl, engine.url);
+                    optionItem.classList.add('selected');
+                }
+            });
+        }
+
+        function updateSelectedEngine(name, logoUrl, urlTemplate) {
+            document.getElementById('selected-logo').src = logoUrl;
+            document.getElementById('selected-name').textContent = name;
+            currentSearchUrlTemplate = urlTemplate;
+            const searchInput = document.getElementById('search-input');
+            if (name === "Wolfram|Alpha") {
+                searchInput.placeholder = '使用LaTex语法搜索以计算...··';
+            } else {
+                const activeTab = document.querySelector('.tab-btn.active span');
+                searchInput.placeholder = `请输入要搜索的${activeTab ? activeTab.textContent : '搜索'}...`;
+            }
+        }
+        
+        // --- NEW: Function to dynamically adjust menu height ---
+        function adjustDropdownHeight(menuElement, anchorElement) {
+            const anchorRect = anchorElement.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - anchorRect.bottom;
+            const margin = 20; // Margin from the bottom of the viewport
+            menuElement.style.maxHeight = `${spaceBelow - margin}px`;
+        }
+
+        function closeDropdown() { document.getElementById('custom-select-container').classList.remove('open'); }
+        
+        // --- MODIFIED: Enhanced toggle function ---
+        function toggleDropdown() { 
+            const container = document.getElementById('custom-select-container');
+            const isOpen = container.classList.toggle('open');
+            if (isOpen) {
+                // Adjust height after the menu is made visible in the DOM
+                requestAnimationFrame(() => {
+                    const menu = document.getElementById('custom-select-options');
+                    const trigger = document.getElementById('custom-select-trigger');
+                    adjustDropdownHeight(menu, trigger);
+                });
+            }
+        }
+
+        function generateMoreMenuItems() {
+            const aggregatorContainer = document.getElementById('aggregator-menu-items');
+            const startpageContainer = document.getElementById('startpage-menu-items');
+            function createMenuItem(data) {
+                const logoUrl = `https://www.google.com/s2/favicons?domain=${data.domain}&sz=64`;
+                const item = document.createElement('a');
+                item.href = data.url;
+                item.target = '_blank';
+                item.className = 'menu-item';
+                item.innerHTML = `<img src="${logoUrl}" alt="${data.name} logo"><span>${data.name}</span>`;
+                return item;
+            }
+            shortcuts.searchAggregators.forEach(data => aggregatorContainer.appendChild(createMenuItem(data)));
+            shortcuts.startPages.forEach(data => startpageContainer.appendChild(createMenuItem(data)));
+        }
+
+        function closeMoreMenu() { document.getElementById('more-dropdown').classList.remove('open'); }
+        
+        // --- MODIFIED: Enhanced toggle function ---
+        function toggleMoreMenu() { 
+            const dropdown = document.getElementById('more-dropdown');
+            const isOpen = dropdown.classList.toggle('open');
+            if (isOpen) {
+                requestAnimationFrame(() => {
+                    const menu = document.getElementById('more-menu');
+                    // On mobile, the anchor is the whole tab container due to CSS positioning
+                    const anchor = window.innerWidth <= 768 
+                        ? document.getElementById('tabs-container') 
+                        : document.getElementById('more-btn');
+                    adjustDropdownHeight(menu, anchor);
+                });
+            }
+        }
+
+        function setupBackgroundCustomizer() {
+            const panel = document.createElement('div');
+            panel.id = 'background-panel';
+            panel.innerHTML = `
+                <div class="panel-header">
+                    <h3>自定义背景</h3>
+                    <button class="panel-close-btn">&times;</button>
+                </div>
+                <div class="panel-body">
+                    <div class="bg-option">
+                        <label for="bg-image-url">图片链接</label>
+                        <div class="input-with-btn">
+                            <input type="text" id="bg-image-url" placeholder="粘贴图片URL">
+                            <button class="apply-btn" id="bg-image-apply">应用</button>
+                        </div>
+                    </div>
+                    <div class="bg-option">
+                        <label for="bg-solid-color">纯色</label>
+                         <div class="input-with-btn">
+                            <input type="color" id="bg-solid-color" value="#667eea">
+                            <button class="apply-btn" id="bg-solid-apply">应用</button>
+                        </div>
+                    </div>
+                    <div class="bg-option">
+                        <label>渐变</label>
+                        <div class="input-with-btn">
+                            <div class="gradient-pickers">
+                                <input type="color" id="bg-gradient-1" value="#667eea">
+                                <span>→</span>
+                                <input type="color" id="bg-gradient-2" value="#764ba2">
+                            </div>
+                             <button class="apply-btn" id="bg-gradient-apply">应用</button>
+                        </div>
+                    </div>
+                    <div class="bg-option">
+                        <label>重置</label>
+                        <div class="source-buttons">
+                            <button id="bg-default-btn">恢复默认</button>
+                        </div>
+                    </div>
+                </div>`;
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'panel-overlay';
+            document.body.appendChild(overlay);
+            document.body.appendChild(panel);
+
+            const bgToggle = document.getElementById('background-toggle');
+            const closeBtn = panel.querySelector('.panel-close-btn');
+            const openPanel = () => { panel.classList.add('visible'); overlay.classList.add('visible'); };
+            const closePanel = () => { panel.classList.remove('visible'); overlay.classList.remove('visible'); };
+            bgToggle.addEventListener('click', openPanel);
+            closeBtn.addEventListener('click', closePanel);
+            overlay.addEventListener('click', closePanel);
+
+            const imageUrlInput = panel.querySelector('#bg-image-url');
+            const solidColorInput = panel.querySelector('#bg-solid-color');
+            const gradient1Input = panel.querySelector('#bg-gradient-1');
+            const gradient2Input = panel.querySelector('#bg-gradient-2');
+            
+            const imageApplyBtn = panel.querySelector('#bg-image-apply');
+            const solidApplyBtn = panel.querySelector('#bg-solid-apply');
+            const gradientApplyBtn = panel.querySelector('#bg-gradient-apply');
+            const defaultBtn = panel.querySelector('#bg-default-btn');
+
+            const applyBackground = (setting) => {
+                const bodyStyle = document.body.style;
+                bodyStyle.transition = 'background 0.5s ease-in-out';
+                switch(setting.type) {
+                    case 'image': bodyStyle.backgroundImage = `url(${setting.value})`; break;
+                    case 'color': bodyStyle.backgroundImage = 'none'; bodyStyle.backgroundColor = setting.value; break;
+                    case 'gradient': bodyStyle.backgroundImage = `linear-gradient(135deg, ${setting.value[0]}, ${setting.value[1]})`; break;
+                    default: bodyStyle.backgroundImage = 'var(--background-gradient)'; bodyStyle.backgroundColor = '';
+                }
+            };
+            const saveAndApply = (setting) => { localStorage.setItem('backgroundSetting', JSON.stringify(setting)); applyBackground(setting); };
+            
+            imageApplyBtn.addEventListener('click', () => {
+                if (imageUrlInput.value.trim()) saveAndApply({ type: 'image', value: imageUrlInput.value.trim() });
+            });
+            solidApplyBtn.addEventListener('click', () => saveAndApply({ type: 'color', value: solidColorInput.value }));
+            gradientApplyBtn.addEventListener('click', () => saveAndApply({ type: 'gradient', value: [gradient1Input.value, gradient2Input.value] }));
+            defaultBtn.addEventListener('click', () => {
+                localStorage.removeItem('backgroundSetting');
+                applyBackground({ type: 'default' });
+            });
+            
+            const savedBg = localStorage.getItem('backgroundSetting');
+            if (savedBg) applyBackground(JSON.parse(savedBg));
+        }
+        
+        function initializeApp() {
+            setupBackgroundCustomizer();
+            populateOptionsGrid('search');
+            generateMoreMenuItems();
+
+            const searchForm = document.getElementById('search-form');
+            const searchInput = document.getElementById('search-input');
+            const selectContainer = document.getElementById('custom-select-container');
+            const selectTrigger = document.getElementById('custom-select-trigger');
+            const moreDropdown = document.getElementById('more-dropdown');
+            const moreBtn = document.getElementById('more-btn');
+            
+            const suggestionsContainer = document.getElementById('search-suggestions');
+            let suggestionTimeout;
+
+            searchInput.addEventListener('input', () => {
+                const query = searchInput.value.trim();
+                clearTimeout(suggestionTimeout);
+                if (query) {
+                    suggestionTimeout = setTimeout(() => {
+                        const script = document.createElement('script');
+                        script.src = `https://suggestion.baidu.com/su?wd=${encodeURIComponent(query)}&cb=handleBaiduSuggestion`;
+                        document.body.appendChild(script);
+                        script.onload = () => document.body.removeChild(script);
+                    }, 200);
+                } else {
+                    suggestionsContainer.style.display = 'none';
+                }
+            });
+
+            searchInput.addEventListener('blur', () => setTimeout(() => { suggestionsContainer.style.display = 'none'; }, 200));
+            searchInput.addEventListener('focus', () => {
+                if (searchInput.value.trim() && suggestionsContainer.children.length > 0) {
+                    suggestionsContainer.style.display = 'block';
+                }
+            });
+            
+            document.querySelectorAll('.tab-btn').forEach(button => {
+                 if (button.dataset.category) {
+                    button.addEventListener('click', function() {
+                        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                        this.classList.add('active');
+                        populateOptionsGrid(this.dataset.category);
+                        closeMoreMenu(); closeDropdown();
+                    });
+                }
+            });
+
+            moreBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleMoreMenu(); closeDropdown(); });
+            
+            searchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const query = searchInput.value.trim();
+                if (query && currentSearchUrlTemplate) window.open(currentSearchUrlTemplate.replace('QUERY', encodeURIComponent(query)), '_blank');
+            });
+
+            selectTrigger.addEventListener('click', (e) => { e.stopPropagation(); toggleDropdown(); closeMoreMenu(); });
+            
+            window.addEventListener('click', (e) => {
+                if (!selectContainer.contains(e.target)) closeDropdown();
+                if (!moreDropdown.contains(e.target)) closeMoreMenu();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') { closeDropdown(); closeMoreMenu(); }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); searchInput.focus(); searchInput.select(); }
+                if (e.key === 'Enter' && document.activeElement === searchInput) { searchForm.dispatchEvent(new Event('submit')); }
+                if (e.key >= '1' && e.key <= '7' && !e.ctrlKey && !e.metaKey && document.activeElement !== searchInput) {
+                    const tab = document.querySelectorAll('.tab-btn[data-category]')[parseInt(e.key) - 1];
+                    if (tab) tab.click();
+                }
+            });
+            
+            // --- NEW: Recalculate menu height on window resize ---
+            window.addEventListener('resize', () => {
+                if (selectContainer.classList.contains('open')) {
+                    const menu = document.getElementById('custom-select-options');
+                    const trigger = document.getElementById('custom-select-trigger');
+                    adjustDropdownHeight(menu, trigger);
+                }
+                if (moreDropdown.classList.contains('open')) {
+                     const menu = document.getElementById('more-menu');
+                    const anchor = window.innerWidth <= 768 
+                        ? document.getElementById('tabs-container') 
+                        : document.getElementById('more-btn');
+                    adjustDropdownHeight(menu, anchor);
+                }
+            });
+
+            searchInput.addEventListener('focus', () => searchForm.style.transform = 'translateY(-2px)');
+            searchInput.addEventListener('blur', () => searchForm.style.transform = 'translateY(0)');
+            
+            document.addEventListener('click', function(e) {
+                const button = e.target.closest('.tab-btn, .menu-item, #search-button, .more-btn, .option-item, .suggestion-item, .tool-btn');
+                if (button && !button.querySelector('.ripple')) createRipple(e, button);
+            });
+            
+            document.querySelectorAll('.glass-container').forEach((container, index) => {
+                container.style.opacity = '0';
+                container.style.transform = 'translateY(30px)';
+                container.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                setTimeout(() => { container.style.opacity = '1'; container.style.transform = 'translateY(0)'; }, index * 150);
+            });
+            setTimeout(() => { searchInput.focus(); }, 800);
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
