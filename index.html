@@ -40,9 +40,9 @@
         :root {
             --primary-color: #007AFF;
             --secondary-color: #5856D6;
-            --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --background-gradient: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
             --glass-bg: rgba(255, 255, 255, 0.25);
-            --glass-border: rgba(255, 255, 255, 0.18);
+            --glass-border: rgba(255， 255, 255, 0.18);
             --text-color: #1d1d1f;
             --text-secondary: #6e6e73;
             --text-light: rgba(255, 255, 255, 0.9);
@@ -61,7 +61,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+            font-family: sans-serif;
             background-color: #667eea; /* Fallback */
             background-image: var(--background-gradient);
             background-size: cover;
@@ -560,13 +560,23 @@
         #search-button:active { transform: scale(0.95); }
 
         /* --- 7. 顶部工具按钮 --- */
-        .top-right-tools {
+        /* MODIFIED: Renamed to a more generic name for reuse */
+        .corner-tools {
             position: fixed;
-            top: 20px;
-            right: 20px;
             z-index: 1000;
             display: flex;
             gap: 12px;
+        }
+
+        .top-right-tools {
+            top: 20px;
+            right: 20px;
+        }
+        
+        /* NEW: Styles for the top-left button container */
+        .top-left-tools {
+            top: 20px;
+            left: 20px;
         }
 
         .tool-btn {
@@ -625,8 +635,8 @@
         }
 
         .suggestion-item:hover { background: var(--menu-hover-bg); }
-
-        /* --- 11. 背景设置面板 --- */
+        
+        /* --- 11. 弹出面板和侧边栏通用样式 --- */
         #panel-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.4);
@@ -637,6 +647,8 @@
             pointer-events: none;
         }
         #panel-overlay.visible { opacity: 1; pointer-events: auto; }
+        
+        /* 背景设置面板 */
         #background-panel {
             position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0.95);
@@ -651,11 +663,102 @@
             pointer-events: none;
         }
         #background-panel.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+        
+        /* --- NEW: 左侧导航侧边栏 --- */
+        #left-sidebar {
+            position: fixed; top: 0; left: 0;
+            transform: translateX(-100%);
+            width: clamp(260px, 30vw, 320px);
+            height: 100vh;
+            z-index: 2000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            border-right: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-medium);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            pointer-events: none;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        #left-sidebar.visible { 
+            opacity: 1; 
+            transform: translateX(0); 
+            pointer-events: auto; 
+        }
+        
         .panel-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--glass-border); }
         .panel-header h3 { margin: 0; font-size: 18px; font-weight: 600; }
-        .panel-close-btn { background: transparent; border: none; font-size: 24px; line-height: 1; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+        .panel-close-btn { 
+            background: transparent; border: none; font-size: 24px; line-height: 1; 
+            cursor: pointer; opacity: 0.7; transition: opacity 0.2s; 
+            /* NEW: positioning for reusability */
+            position: absolute; top: 16px; right: 24px;
+        }
         .panel-close-btn:hover { opacity: 1; }
         .panel-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+        
+        /* --- NEW/MODIFIED: 侧边栏内容与动画样式 --- */
+        .sidebar-content details { margin-top: 40px; }
+        .sidebar-content summary {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            list-style: none; /* Hides default triangle */
+        }
+        .sidebar-content summary::-webkit-details-marker { display: none; }
+        .sidebar-content summary .collapse-icon {
+            display: inline-block;
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .sidebar-content details[open] > summary .collapse-icon {
+            transform: rotate(180deg);
+        }
+        .details-wrapper {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .sidebar-content details[open] .details-wrapper {
+            grid-template-rows: 1fr;
+        }
+        .details-inner {
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .sidebar-content details[open] .details-inner {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .mc-nav-btn {
+            display: block;
+            margin-top: 20px;
+            padding: 12px 20px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.6), rgba(39, 174, 96, 0.4));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .mc-nav-btn:hover {
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.8), rgba(39, 174, 96, 0.6));
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);
+        }
+
         .bg-option { display: flex; flex-direction: column; gap: 10px; }
         .bg-option label { font-weight: 500; font-size: 14px; }
         .bg-option input[type="text"] { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.5); color: #333; outline: none; transition: all 0.2s; }
@@ -672,7 +775,8 @@
         #background-panel .panel-header h3,
         #background-panel .bg-option label,
         #background-panel .panel-close-btn,
-        #background-panel .gradient-pickers span {
+        #background-panel .gradient-pickers span,
+        #left-sidebar .panel-close-btn { /* NEW: Applied to sidebar close button */
             color: rgba(255, 255, 255, 0.95);
             text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
         }
@@ -734,40 +838,41 @@
             text-overflow: ellipsis;
         }
         
-        /* === 新增样式: 快捷访问模块专属样式 === */
+        /* === MODIFIED: 快捷访问模块专属样式 START === */
         #toolbox-container .menu-category {
-            margin-bottom: 0; /* 移除内部分类间距 */
+            margin-bottom: 25px;
         }
-        #toolbox-container .section-header {
+        #toolbox-container .menu-category:last-child {
+            margin-bottom: 0;
+        }
+        #toolbox-container .menu-category-title {
             font-size: 18px;
             font-weight: 600;
             color: var(--text-light);
-            /* MODIFIED: 增强了快捷访问标题的文本阴影 */
             text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-            justify-content: center; /* 居中标题和图标 */
+            justify-content: center;
             margin-bottom: 20px;
             padding: 0;
             cursor: default;
         }
-        #toolbox-container .section-header i {
-            color: var(--text-light); /* 图标颜色与文字统一 */
+        #toolbox-container .menu-category-title i {
+            color: var(--text-light);
             font-size: 16px;
         }
         #toolbox-container .menu-items {
-            display: flex; /* 改为flex布局以居中 */
+            display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            gap: 15px; /* 项目间距 */
+            gap: 15px;
         }
         #toolbox-container .menu-item {
             background: rgba(255, 255, 255, 0.1);
             color: var(--text-light);
-            /* MODIFIED: 增强了快捷访问项目的文本阴影 */
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
             border-radius: 12px;
-            flex-basis: 160px; /* 设置基础宽度 */
             justify-content: center;
             transition: all 0.25s ease;
+            padding: 10px 16px;
         }
         #toolbox-container .menu-item:hover {
              background: rgba(255, 255, 255, 0.2);
@@ -776,6 +881,12 @@
         #toolbox-container .menu-item img {
             border-radius: 6px;
         }
+        #toolbox-container .info-icon {
+            margin-left: 8px;
+            background-color: rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.8);
+        }
+        /* === MODIFIED: 快捷访问模块专属样式 END === */
 
 
         /* --- 8. 响应式设计 (重点优化) --- */
@@ -823,7 +934,13 @@
             .custom-select-trigger img { width: 20px; height: 20px; }
             #search-input { padding: 0 15px; font-size: 15px; }
             .menu-items { grid-template-columns: 1fr; }
-            .top-right-tools { top: 10px; right: 10px; }
+            
+            .corner-tools { /* MODIFIED: grouped rule */
+                top: 10px; 
+            }
+            .top-right-tools { right: 10px; }
+            .top-left-tools { left: 10px; }
+            
             .tool-btn { width: 45px; height: 45px; font-size: 16px; }
 
             #engine-grid {
@@ -940,31 +1057,128 @@
              <div id="engine-grid"></div>
         </div>
 
-        <!-- === 优化后的快捷访问模块 START === -->
+        <!-- === MODIFIED: 快捷访问模块 START === -->
         <div class="glass-container" id="toolbox-container">
+            <!-- 【代码】 -->
             <div class="menu-category">
-                <div class="menu-category-title section-header">
-                    <i class="fa-solid fa-star"></i>
-                    <span>快捷访问</span>
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-code"></i>
+                    <span>代码</span>
+                </div>
+                <div class="menu-items">
+                    <a href="https://github.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=github.com&sz=64" alt="GitHub logo">
+                        <span>GitHub</span>
+                    </a>
+                </div>
+            </div>
+            <!-- 【学习】 -->
+            <div class="menu-category">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span>学习</span>
+                </div>
+                <div class="menu-items">
+                    <a href="https://www.yuque.com/dashboard" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=yuque.com&sz=64" alt="语雀 logo">
+                        <span>语雀</span>
+                    </a>
+                    <a href="https://www.notion.so/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=notion.so&sz=64" alt="Notion logo">
+                        <span>Notion</span>
+                    </a>
+                </div>
+            </div>
+            <!-- 【图标】 -->
+            <div class="menu-category">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-icons"></i>
+                    <span>图标</span>
+                </div>
+                <div class="menu-items">
+                    <a href="https://pushkeen.ai/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=pushkeen.ai&sz=64" alt="Pushkeen.AI logo">
+                        <span>Pushkeen.AI</span>
+                    </a>
+                    <a href="https://iconpark.oceanengine.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=oceanengine.com&sz=64" alt="字节跳动图标库 logo">
+                        <span>字节跳动图标库</span>
+                    </a>
+                    <a href="https://www.iconfont.cn/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=iconfont.cn&sz=64" alt="阿里巴巴矢量图形库 logo">
+                        <span>阿里巴巴矢量图形库</span>
+                    </a>
+                </div>
+            </div>
+            <!-- 【工具】 -->
+            <div class="menu-category">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-toolbox"></i>
+                    <span>工具</span>
                 </div>
                 <div class="menu-items">
                     <a href="https://ip.skk.moe/" target="_blank" class="menu-item">
-                        <img src="https://www.google.com/s2/favicons?domain=skk.moe&sz=64" alt="IP查询 logo">
-                        <span>IP查询</span>
+                        <img src="https://www.google.com/s2/favicons?domain=skk.moe&sz=64" alt="IP 查询 logo">
+                        <span>IP 查询</span>
                     </a>
-                    <!-- 您可以在这里继续添加更多快捷访问链接 -->
+                    <a href="https://vocalremover.org/next/zh/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=vocalremover.org&sz=64" alt="人声分离 logo">
+                        <span>人声分离</span>
+                    </a>
+                    <a href="https://www.uuidgenerator.net/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=uuidgenerator.net&sz=64" alt="在线 UUID 生成 logo">
+                        <span>在线 UUID 生成</span>
+                    </a>
+                    <a href="https://github.abskoop.workers.dev/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=github.abskoop.workers.dev&sz=64" alt="GitHub 文件加速 logo">
+                        <span>GitHub 文件加速</span>
+                    </a>
+                    <a href="https://renew.509605.xyz/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=509605.xyz&sz=64" alt="MS365 E5 Renew X logo">
+                        <span>MS365 E5 Renew X</span>
+                        <i class="info-icon">i</i>
+                        <span class="tooltip-text">由Lrize、运营</span>
+                    </a>
+                    <a href="https://vocalremover.org/next/zh/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=vocalremover.org&sz=64" alt="HTML/CSS/JS 在线预览工具 logo">
+                        <span>HTML/CSS/JS 在线预览</span>
+                    </a>
                 </div>
             </div>
         </div>
-        <!-- === 优化后的快捷访问模块 END === -->
+        <!-- === MODIFIED: 快捷访问模块 END === -->
 
     </div>
 
-    <div class="top-right-tools">
+    <!-- === NEW: 左上角工具按钮 === -->
+    <div class="corner-tools top-left-tools">
+        <button class="tool-btn" id="sidebar-toggle" title="专题导航"><i class="fa-solid fa-compass"></i></button>
+    </div>
+
+    <div class="corner-tools top-right-tools">
         <button class="tool-btn" id="background-toggle" title="自定义背景"><i class="fa-solid fa-image"></i></button>
     </div>
 
     <div id="panel-overlay"></div>
+
+    <!-- === NEW/MODIFIED: 左侧导航侧边栏 HTML结构更新 === -->
+    <div id="left-sidebar">
+        <button class="panel-close-btn" id="sidebar-close-btn">&times;</button>
+        <div class="sidebar-content">
+            <details open>
+                <summary>
+                    <b>专题导航</b> 
+                    <span class="collapse-icon">▼</span>
+                </summary>
+                <div class="details-wrapper">
+                    <div class="details-inner">
+                        <a href="pages/minecraft.html" class="mc-nav-btn">MC 导航</a>
+                    </div>
+                </div>
+            </details>
+        </div>
+    </div>
+    
     <div id="background-panel">
         <div class="panel-header">
             <h3>自定义背景</h3>
@@ -1296,7 +1510,7 @@
                         <img src="${logoUrl}" alt="${data.name} logo">
                         <span>${data.name}</span>
                         <i class="info-icon">i</i>
-                        <span class="tooltip-text">💬 ${data.description}</span>
+                        <span class="tooltip-text">${data.description}</span>
                     `;
                     itemsGrid.appendChild(item);
                 });
@@ -1323,22 +1537,50 @@
                 });
             }
         }
-
-        function setupBackgroundCustomizer() {
-            const panel = document.getElementById('background-panel');
+        
+        // --- NEW/MODIFIED: Panel and Sidebar Management ---
+        function setupPopups() {
             const overlay = document.getElementById('panel-overlay');
-            const bgToggle = document.getElementById('background-toggle');
-            const closeBtn = panel.querySelector('.panel-close-btn');
-
-            const imageUrlInput = panel.querySelector('#bg-image-url');
-            const solidColorInput = panel.querySelector('#bg-solid-color');
-            const gradient1Input = panel.querySelector('#bg-gradient-1');
-            const gradient2Input = panel.querySelector('#bg-gradient-2');
             
-            const imageApplyBtn = panel.querySelector('#bg-image-apply');
-            const solidApplyBtn = panel.querySelector('#bg-solid-apply');
-            const gradientApplyBtn = panel.querySelector('#bg-gradient-apply');
-            const defaultBtn = panel.querySelector('#bg-default-btn');
+            // Background Panel
+            const bgPanel = document.getElementById('background-panel');
+            const bgToggle = document.getElementById('background-toggle');
+            const bgCloseBtn = bgPanel.querySelector('.panel-close-btn');
+
+            // Left Sidebar
+            const leftSidebar = document.getElementById('left-sidebar');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebarCloseBtn = document.getElementById('sidebar-close-btn');
+
+            const openPanel = (panel) => {
+                closeAllPopups(); // Close any other open panels first
+                panel.classList.add('visible');
+                overlay.classList.add('visible');
+            };
+
+            const closeAllPopups = () => {
+                bgPanel.classList.remove('visible');
+                leftSidebar.classList.remove('visible');
+                overlay.classList.remove('visible');
+            };
+
+            bgToggle.addEventListener('click', (e) => { e.stopPropagation(); openPanel(bgPanel); loadBackgroundSettingsIntoPanel(); });
+            sidebarToggle.addEventListener('click', (e) => { e.stopPropagation(); openPanel(leftSidebar); });
+            
+            bgCloseBtn.addEventListener('click', closeAllPopups);
+            sidebarCloseBtn.addEventListener('click', closeAllPopups);
+            overlay.addEventListener('click', closeAllPopups);
+            
+            // Background Customizer Logic
+            const imageUrlInput = bgPanel.querySelector('#bg-image-url');
+            const solidColorInput = bgPanel.querySelector('#bg-solid-color');
+            const gradient1Input = bgPanel.querySelector('#bg-gradient-1');
+            const gradient2Input = bgPanel.querySelector('#bg-gradient-2');
+            
+            const imageApplyBtn = bgPanel.querySelector('#bg-image-apply');
+            const solidApplyBtn = bgPanel.querySelector('#bg-solid-apply');
+            const gradientApplyBtn = bgPanel.querySelector('#bg-gradient-apply');
+            const defaultBtn = bgPanel.querySelector('#bg-default-btn');
 
             function loadBackgroundSettingsIntoPanel() {
                 const savedBg = localStorage.getItem('backgroundSetting');
@@ -1350,12 +1592,8 @@
                     gradient2Input.value = '#764ba2';
                     
                     switch(setting.type) {
-                        case 'image':
-                            imageUrlInput.value = setting.value;
-                            break;
-                        case 'color':
-                            solidColorInput.value = setting.value;
-                            break;
+                        case 'image': imageUrlInput.value = setting.value; break;
+                        case 'color': solidColorInput.value = setting.value; break;
                         case 'gradient':
                             if (Array.isArray(setting.value) && setting.value.length === 2) {
                                 gradient1Input.value = setting.value[0];
@@ -1370,20 +1608,6 @@
                     gradient2Input.value = '#764ba2';
                 }
             }
-
-            const openPanel = () => {
-                panel.classList.add('visible');
-                overlay.classList.add('visible');
-                loadBackgroundSettingsIntoPanel();
-            };
-            const closePanel = () => {
-                panel.classList.remove('visible');
-                overlay.classList.remove('visible');
-            };
-
-            bgToggle.addEventListener('click', openPanel);
-            closeBtn.addEventListener('click', closePanel);
-            overlay.addEventListener('click', closePanel);
 
             const applyBackground = (setting) => {
                 const bodyStyle = document.body.style;
@@ -1400,9 +1624,7 @@
                 applyBackground(setting);
             };
             
-            imageApplyBtn.addEventListener('click', () => {
-                if (imageUrlInput.value.trim()) saveAndApply({ type: 'image', value: imageUrlInput.value.trim() });
-            });
+            imageApplyBtn.addEventListener('click', () => { if (imageUrlInput.value.trim()) saveAndApply({ type: 'image', value: imageUrlInput.value.trim() }); });
             solidApplyBtn.addEventListener('click', () => saveAndApply({ type: 'color', value: solidColorInput.value }));
             gradientApplyBtn.addEventListener('click', () => saveAndApply({ type: 'gradient', value: [gradient1Input.value, gradient2Input.value] }));
             defaultBtn.addEventListener('click', () => {
@@ -1415,7 +1637,7 @@
         }
         
         function initializeApp() {
-            setupBackgroundCustomizer();
+            setupPopups();
             populateOptionsGrid('search');
             generateMoreMenuItems();
             renderEngineGrid('search');
@@ -1480,7 +1702,11 @@
             });
 
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') { closeDropdown(); closeMoreMenu(); }
+                if (e.key === 'Escape') { 
+                    closeDropdown(); 
+                    closeMoreMenu();
+                    document.getElementById('panel-overlay').click(); // Reuse overlay click to close any open panel
+                }
                 if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); searchInput.focus(); searchInput.select(); }
                 if (e.key === 'Enter' && document.activeElement === searchInput) { searchForm.dispatchEvent(new Event('submit')); }
                 if (e.key >= '1' && e.key <= '7' && !e.ctrlKey && !e.metaKey && document.activeElement !== searchInput) {
@@ -1508,7 +1734,7 @@
             searchInput.addEventListener('blur', () => searchForm.style.transform = 'translateY(0)');
             
             document.addEventListener('click', function(e) {
-                const button = e.target.closest('.tab-btn, .menu-item, #search-button, .more-btn, .option-item, .suggestion-item, .tool-btn, .engine-grid-item');
+                const button = e.target.closest('.tab-btn, .menu-item, #search-button, .more-btn, .option-item, .suggestion-item, .tool-btn, .engine-grid-item, .mc-nav-btn'); // Added .mc-nav-btn
                 if (button && !button.querySelector('.ripple')) createRipple(e, button);
             });
             
@@ -1527,4 +1753,4 @@
         document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
-</html>
+            </html>
