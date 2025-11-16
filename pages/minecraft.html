@@ -1,1 +1,1729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MC 导航</title>
+    <link rel="icon" href="https://s21.ax1x.com/2025/11/16/pZPT0Og.jpg" type="image/jpg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <style>
+        /* --- 渐变动画标题 --- */
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
+        .main-title {
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            font-weight: 800;
+            color: white;
+            text-align: center;
+            margin-bottom: 25px;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            cursor: default;
+        }
+
+        .animated-gradient {
+            background: linear-gradient(90deg, 
+                #ff00de, #ff7f00, #ffff00, #00ff00, #00ffff, #007fff, #8b00ff);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: gradient-animation 8s ease infinite;
+        }
+
+        /* --- 1. CSS变量系统 --- */
+        :root {
+            --primary-color: #007AFF;
+            --secondary-color: #5856D6;
+            --background-gradient: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --text-color: #1d1d1f;
+            --text-secondary: #6e6e73;
+            --text-light: rgba(255, 255, 255, 0.9);
+            --shadow-light: 0 8px 32px rgba(31, 38, 135, 0.15);
+            --shadow-medium: 0 8px 32px rgba(31, 38, 135, 0.25);
+            --border-radius: 16px;
+            --border-radius-large: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: sans-serif;
+            background-color: #667eea; /* Fallback */
+            background-image: var(--background-gradient);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+            transition: background 0.5s ease-in-out, color 0.3s ease;
+        }
+
+        /* 主容器 */
+        .main-container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* 玻璃效果容器 */
+        .glass-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-large);
+            box-shadow: var(--shadow-light);
+            padding: 30px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .glass-container:hover {
+            box-shadow: var(--shadow-medium);
+        }
+        
+        /* --- Tooltip Styles --- */
+        .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 6px 10px;
+            z-index: 101;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-size: 12px;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+
+        .menu-item:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            color: #888;
+            font-size: 10px;
+            font-weight: bold;
+            font-style: normal;
+            margin-left: auto;
+            flex-shrink: 0;
+            cursor: default;
+            user-select: none;
+        }
+
+        /* 点击涟漪效果 */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        }
+        @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+        /* --- 顶部工具按钮 --- */
+        .corner-tools {
+            position: fixed;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column; /* MODIFIED: allow stacking */
+            gap: 12px;
+        }
+
+        .top-right-tools { top: 20px; right: 20px; }
+        .top-left-tools { top: 20px; left: 20px; }
+
+        .tool-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(20px);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .tool-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: scale(1.1);
+        }
+        
+        /* --- 滚动条美化 --- */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.5); }
+        
+        /* --- 弹出面板和侧边栏通用样式 --- */
+        #panel-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 1999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        #panel-overlay.visible { opacity: 1; pointer-events: auto; }
+        
+        /* 背景设置面板 */
+        #background-panel {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            width: 90%; max-width: 420px; z-index: 2000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-large);
+            box-shadow: var(--shadow-medium);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            pointer-events: none;
+        }
+        #background-panel.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+        
+        .panel-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--glass-border); }
+        .panel-header h3 { margin: 0; font-size: 18px; font-weight: 600; }
+        .panel-close-btn { 
+            background: transparent; border: none; font-size: 24px; line-height: 1; 
+            cursor: pointer; opacity: 0.7; transition: opacity 0.2s; 
+            position: absolute; top: 16px; right: 24px;
+        }
+        .panel-close-btn:hover { opacity: 1; }
+        .panel-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+        
+        .bg-option { display: flex; flex-direction: column; gap: 10px; }
+        .bg-option label { font-weight: 500; font-size: 14px; }
+        .bg-option input[type="text"] { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.5); color: #333; outline: none; transition: all 0.2s; }
+        .bg-option input[type="text"]:focus { box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2); border-color: var(--primary-color); }
+        .gradient-pickers { display: flex; align-items: center; gap: 12px; }
+        .gradient-pickers span { font-size: 18px; opacity: 0.6; }
+        .bg-option input[type="color"] { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 50px; height: 30px; background-color: transparent; border: 1px solid var(--glass-border); border-radius: 6px; cursor: pointer; }
+        .bg-option input[type="color"]::-webkit-color-swatch { border-radius: 5px; border: none; }
+        .bg-option input[type="color"]::-moz-color-swatch { border-radius: 5px; border: none; }
+        .source-buttons button { flex-grow: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.5); color: var(--text-color); cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .source-buttons button:hover { background: rgba(255, 255, 255, 0.8); border-color: var(--primary-color); }
+        
+        #background-panel .panel-header h3,
+        #background-panel .bg-option label,
+        #background-panel .panel-close-btn,
+        #background-panel .gradient-pickers span {
+            color: rgba(255, 255, 255, 0.95);
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+        .input-with-btn { display: flex; gap: 10px; align-items: center; }
+        .input-with-btn input { flex-grow: 1; }
+        .apply-btn { padding: 10px 16px; border-radius: 8px; border: none; background: var(--primary-color); color: white; font-weight: 500; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; }
+        .apply-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+        .input-with-btn .gradient-pickers { flex-grow: 1; }
+        .bg-option input[type="text"] { flex-grow: 1; }
+        
+        /* === MC导航页面专属样式 START === */
+        #mc-nav-container .menu-category {
+            margin-bottom: 25px;
+        }
+        #mc-nav-container .menu-category:last-child {
+            margin-bottom: 0;
+        }
+
+        #mc-nav-container .menu-category-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-light);
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            padding: 8px 25px;
+            justify-content: center;
+            margin: 0 auto 20px auto;
+            width: fit-content;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: default;
+        }
+        #mc-nav-container .menu-category-title i {
+            color: var(--text-light);
+            font-size: 16px;
+        }
+
+        #mc-nav-container .menu-separator {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            font-size: 14px;
+            margin: 25px 0 15px;
+            font-weight: 500;
+        }
+        #mc-nav-container .menu-separator::before,
+        #mc-nav-container .menu-separator::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        #mc-nav-container .menu-separator span {
+            padding: 0 15px;
+        }
+        #mc-nav-container .menu-items {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+        #mc-nav-container .menu-item {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            justify-content: center;
+            transition: all 0.25s ease;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            position: relative;
+        }
+        #mc-nav-container .menu-item:hover {
+             background: rgba(255, 255, 255, 0.2);
+             transform: translateY(-3px);
+        }
+        #mc-nav-container .menu-item img {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+        }
+        #mc-nav-container .info-icon {
+            margin-left: 8px;
+            background-color: rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.8);
+        }
+        
+        #mc-nav-container.list-view .menu-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 8px 20px;
+            justify-content: flex-start;
+        }
+        #mc-nav-container.list-view .menu-item {
+            background: transparent;
+            padding: 8px 10px;
+            justify-content: flex-start;
+            border-radius: 8px;
+            text-shadow: none;
+        }
+        #mc-nav-container.list-view .menu-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(3px);
+        }
+        /* === MC导航页面专属样式 END === */
+/* === Wiki Section Styles START === */
+        .wiki-comparison-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 10px;
+        }
+        .wiki-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            color: var(--text-light);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+        .wiki-card h3 {
+            margin-top: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .wiki-card p {
+            margin: 0 0 10px 0;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        .wiki-card .links a {
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 5px;
+            color: #a1c4fd;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .wiki-card .links a:hover {
+            text-decoration: underline;
+        }
+        .details-container {
+            margin-top: 20px;
+            padding: 0 10px;
+            color: var(--text-light);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+        .details-container details {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .details-container summary {
+            padding: 15px 20px;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+        }
+        .details-container details[open] > summary {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .details-container .details-content {
+            padding: 5px 20px 20px 20px;
+            line-height: 1.7;
+            font-size: 15px;
+        }
+        .details-container .details-content p {
+            margin-bottom: 1em;
+        }
+        .details-container .details-content h2 {
+            margin-top: 25px;
+            font-size: 1.2em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 5px;
+        }
+        .details-container a {
+             color: #a1c4fd;
+             text-decoration: none;
+        }
+        .details-container a:hover {
+            text-decoration: underline;
+        }
+        /* === Wiki Section Styles END === */
+
+        /* NEW: Info Box Styles */
+        .info-box {
+            padding: 15px 20px;
+            margin: 0 auto 25px auto;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            max-width: 95%;
+        }
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .info-box ul {
+            margin: 0;
+            padding-left: 20px;
+            list-style-position: outside;
+        }
+        .info-box ul li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        .info-box ul li:last-child {
+            margin-bottom: 0;
+        }
+        .info-box.danger {
+            background-color: rgba(255, 69, 58, 0.15);
+            border-color: rgba(255, 69, 58, 0.3);
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        .info-box.danger h4 {
+            color: #ff453a;
+        }
+        .info-box.danger a {
+            color: #ff857f;
+            text-decoration: underline;
+        }
+
+        /* === 右侧目录边栏样式 START === */
+        #right-sidebar {
+            position: fixed;
+            top: 50%;
+            right: 25px;
+            transform: translateY(-50%);
+            width: 200px;
+            padding: 20px;
+            z-index: 998;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-large);
+            box-shadow: var(--shadow-light);
+            opacity: 0;
+            animation: fadeInSidebar 0.8s 0.5s ease forwards;
+        }
+        @keyframes fadeInSidebar { to { opacity: 1; } }
+        #right-sidebar h4 {
+            margin: 0 0 15px 0;
+            text-align: center;
+            color: var(--text-light);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        #sidebar-toggle-icon {
+            transition: transform 0.3s ease;
+            font-size: 16px;
+        }
+        #right-sidebar.collapsed #sidebar-toggle-icon {
+            transform: rotate(-90deg);
+        }
+        #right-sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 70vh;
+            overflow-y: auto;
+            transition: max-height 0.3s ease-out, margin-top 0.3s ease-out;
+        }
+        #right-sidebar.collapsed ul {
+            max-height: 0;
+            margin-top: 0;
+            overflow: hidden;
+        }
+        #right-sidebar ul::-webkit-scrollbar { width: 5px; }
+        #right-sidebar ul::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); border-radius: 2.5px; }
+        #right-sidebar ul::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 2.5px; }
+        #right-sidebar ul::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.5); }
+        
+        #right-sidebar ul li a {
+            display: block;
+            padding: 10px 15px;
+            text-decoration: none;
+            color: var(--text-light);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        #right-sidebar ul li a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+        /* === 右侧目录边栏样式 END === */
+
+        /* --- 响应式设计 --- */
+        @media (max-width: 1024px) {
+            #right-sidebar { display: none; }
+        }
+        @media (max-width: 768px) {
+            body { padding: 15px; }
+            .main-title { margin-bottom: 20px; }
+            .main-container { max-width: 100%; padding: 0; gap: 20px; }
+            .glass-container { padding: 20px; }
+            .corner-tools { top: 10px; }
+            .top-right-tools { right: 10px; }
+            .top-left-tools { left: 10px; }
+            .tool-btn { width: 45px; height: 45px; font-size: 16px; }
+            #mc-nav-container.list-view .menu-items {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-title">
+        <span class="animated-gradient">Minecraft</span> 导航
+    </div>
+
+    <div class="main-container">
+        
+        <div class="glass-container" id="mc-nav-container">
+
+            <!-- 模组分类 -->
+            <div class="menu-category" id="mods">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-puzzle-piece"></i><span>模组</span>
+                </div>
+                
+                <div class="menu-separator"><span>Java 版</span></div>
+                <div class="menu-items">
+                    <a href="https://modrinth.com/collection/kvLu6jPn" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=modrinth.com&sz=64" alt="Modrinth">
+                        <span>Modrinth 模组推荐合集</span>
+                    </a>
+                </div>
+
+                <div class="menu-separator"><span>基岩版</span></div>
+                <div class="menu-items">
+                    <a href="https://github.com/ff98sha/mclangcn" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=github.com&sz=64" alt="GitHub">
+                        <span>译名修正 (简体中文)</span>
+                    </a>
+                    <a href="https://forum.gamer.com.tw/C.php?bsn=18673&snA=183269" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=gamer.com.tw&sz=64" alt="Gamer.com.tw">
+                        <span>译名修正 (繁体中文)</span>
+                    </a>
+                    <a href="https://www.minebbs.com/resources/v.6239/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=minebbs.com&sz=64" alt="MineBBS">
+                        <span>高亮显示 V2.0.2</span>
+                    </a>
+                    <a href="https://www.minebbs.com/resources/v.6425/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=minebbs.com&sz=64" alt="MineBBS">
+                        <span>血量与伤害显示 V5.0.2</span>
+                    </a>
+                    <a href="https://mcpedl.com/damage-indicator-addon/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mcpedl.com&sz=64" alt="MCPE DL">
+                        <span>Health & Damage Indicator</span>
+                    </a>
+                    <a href="https://www.bilibili.com/video/BV1854y157f6" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=bilibili.com&sz=64" alt="Bilibili">
+                        <span>显示盔甲值和血量值</span>
+                    </a>
+                </div>
+
+                <div class="menu-separator"><span>中国版</span></div>
+                <div class="menu-items">
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4640943699092142603" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>[MOD] 矿物探测</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4651338365655529554" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>【HP】PC 同款-声音字幕</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4657438952905721973" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>JEI 物品管理器</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4646694800164136047" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>R 键整理(一键整理)</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4655430362044475006" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>密码箱——上锁你的箱子</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4643825980690401257" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>小地图</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4644607747828842425" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>小地图【超多功能】-甜柠檬</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4635573466718106065" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>左手移动光源</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4647836760799947947" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>成就联动版</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4656583239975494335" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>我的世界盒子</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4644124381970505061" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>更多的熔炉</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4673170052148792337" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>更好的小地图传送</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4671552257661138848" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>更好的高亮信息显示</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4676026896417731017" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>Eplus 信息显示 Pro</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4670335350301924616" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>高亮信息显示-挖掘进度</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4676993903366589372" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>清爽像素</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4668438420284927645" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>立方像素完整版</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4618155144833761700" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>现代家具</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4637181552998230203" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>真●横扫之刃</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4649078785266653140" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>终极堆叠联动版</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4654702358451730732" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>血量显示</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4639088722571066976" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>装备工具耐久显示</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4634134309906527450" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>连锁采集&一键种植</span></a>
+                    <a href="https://resource-minecraft.h5.163.com/#/detail?id=4644530875847637494" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=163.com&sz=64" alt="163.com"><span>高级拆解台-联动版</span></a>
+                </div>
+            </div>
+            
+            <!-- 光影包分类 -->
+            <div class="menu-category" id="shaders">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-sun"></i><span>光影包</span>
+                </div>
+                <div class="menu-items">
+                    <a href="https://modrinth.com/collection/peAQ3sbw" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=modrinth.com&sz=64" alt="Modrinth">
+                        <span>Modrinth 光影推荐合集</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 整合包分类 -->
+            <div class="menu-category" id="modpacks">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-box-archive"></i><span>整合包</span>
+                </div>
+                <div class="menu-items">
+                    <a href="https://www.mcmod.cn/modpack/1151.html" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mcmod.cn&sz=64" alt="MCMod">
+                        <span>田园乐事</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">Conutryside Delight</span>
+                    </a>
+                    <a href="https://www.mcmod.cn/modpack/1115.html" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mcmod.cn&sz=64" alt="MCMod">
+                        <span>农场物语</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">[FT] FarmingTales</span>
+                    </a>
+                    <a href="https://www.mcmod.cn/modpack/961.html" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mcmod.cn&sz=64" alt="MCMod">
+                        <span>农牧物语</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">Valley of Farming and Ranching</span>
+                    </a>
+                    <a href="https://www.mcmod.cn/modpack/1196.html" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mcmod.cn&sz=64" alt="MCMod">
+                        <span>农场物语 (Forge)</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">[FT-WT] FarmingTales Forge</span>
+                    </a>
+                    <a href="https://bbsmc.net/modpack/utopia-journey" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=bbsmc.net&sz=64" alt="BBSMC">
+                        <span>乌托邦探险之旅</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 服务端核心分类 -->
+            <div class="menu-category" id="server-cores">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-server"></i><span>服务端核心</span>
+                </div>
+                <div class="menu-items">
+                    <a href="https://fabricmc.net/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=fabricmc.net&sz=64" alt="Fabric">
+                        <span>Fabric</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">Java 模组服务端</span>
+                    </a>
+                    <a href="https://files.minecraftforge.net/net/minecraftforge/forge/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=minecraftforge.net&sz=64" alt="Forge">
+                        <span>Forge</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">Java 模组服务端</span>
+                    </a>
+                    <a href="https://getbukkit.org/download/spigot/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=getbukkit.org&sz=64" alt="Spigot">
+                        <span>Spigot</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">主流 Java 插件服务端</span>
+                    </a>
+                    <a href="https://www.spigotmc.org/wiki/bungeecord/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=spigotmc.org&sz=64" alt="BungeeCord">
+                        <span>BungeeCord</span>
+                    </a>
+                    <a href="https://papermc.io/downloads/paper" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=papermc.io&sz=64" alt="Paper">
+                        <span>Paper</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">主流 Java 插件服务端</span>
+                    </a>
+                    <a href="https://papermc.io/software/folia" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=papermc.io&sz=64" alt="Folia">
+                        <span>Folia</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">Java 多线程服务端</span>
+                    </a>
+                    <a href="https://papermc.io/software/velocity" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=papermc.io&sz=64" alt="Velocity">
+                        <span>Velocity</span>
+                    </a>
+                    <a href="https://www.mohistmc.cn/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mohistmc.cn&sz=64" alt="Mohist">
+                        <span>Mohist</span>
+                    </a>
+                    <a href="https://purpurmc.org/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=purpurmc.org&sz=64" alt="Purpur">
+                        <span>Purpur</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">Java 版优化插件服务端</span>
+                    </a>
+                    <a href="https://catmc.org/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=catmc.org&sz=64" alt="CatServer">
+                        <span>CatServer</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">Java 混合端，支持插件模组</span>
+                    </a>
+                    <a href="https://leavesmc.org/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=leavesmc.org&sz=64" alt="Leaves">
+                        <span>Leaves</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">Paper 分支服务端，修复缺失特性，适合生电服</span>
+                    </a>
+                    <a href="http://www.spongepowered.org/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=spongepowered.org&sz=64" alt="SpongeForge">
+                        <span>SpongeForge</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">Java 混合端，支持插件和模组</span>
+                    </a>
+                    <a href="https://github.com/IzzelAliz/Arclight" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=github.com&sz=64" alt="Arclight">
+                        <span>Arclight</span>
+                        <i class="info-icon">i</i><span class="tooltip-text">Java 混合端，支持插件模组</span>
+                    </a>
+                    <a href="https://github.com/CronixMC/HexaCord" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=github.com&sz=64" alt="HexaCord">
+                        <span>HexaCord</span>
+                    </a>
+                    <a href="https://starleap.lanzout.com/iPrLI1v1e1dc" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=lanzout.com&sz=64" alt="Uranium">
+                        <span>Uranium</span>
+                    </a>
+                    <a href="https://cuberite.org/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=cuberite.org&sz=64" alt="Cuberite">
+                        <span>Cuberite</span>
+                    </a>
+                    <a href="https://github.com/LuminolMC/Luminol" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=github.com&sz=64" alt="Luminol">
+                        <span>Luminol</span>
+                    </a>
+                    <a href="https://github.com/Winds-Studio/Leaf" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=github.com&sz=64" alt="Leaf">
+                        <span>Leaf</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 开服平台分类 -->
+            <div class="menu-category" id="server-platforms">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-network-wired"></i><span>开服平台</span>
+                </div>
+                
+                <div class="info-box danger">
+                    <h4><i class="fa-solid fa-triangle-exclamation"></i> 特别注意</h4>
+                    <ul>
+                        <li>本页所述内容不适用于开设网易版 Minecraft 服务器，如有经济实力请在网易 Minecraft 内自行付费开设官方指定的租赁服。</li>
+                        <li><strong>免费的租赁服平台都会存在不稳定、延迟高、容易跑路的风险，如有经济能力不建议过度依赖和使用免费的租赁服平台。</strong></li>
+                        <li>如果需要服务端核心可前往 <a href="#server-cores">服务端核心</a> 下载。</li>
+                    </ul>
+                </div>
+                
+                <div class="menu-items">
+                    <a href="https://www.mczfw.cn/isp.html" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mczfw.cn&sz=64" alt="我的世界找服网"><span>我的世界找服网</span>
+                    </a>
+                    <a href="https://shop62477803.taobao.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=taobao.com&sz=64" alt="Akiracloud"><span>Akiracloud</span>
+                    </a>
+                    <a href="https://aternos.org/:zh-CN" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=aternos.org&sz=64" alt="Aternos"><span>Aternos</span>
+                    </a>
+                    <a href="https://exaroton.com/:zh-CN" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=exaroton.com&sz=64" alt="exaroton"><span>exaroton</span>
+                    </a>
+                    <a href="https://scalacube.com/zh/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=scalacube.com&sz=64" alt="ScalaCube"><span>ScalaCube</span>
+                    </a>
+                    <a href="https://pixelcloud.cn/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=pixelcloud.cn&sz=64" alt="PixelCloud"><span>PixelCloud</span>
+                    </a>
+                    <a href="https://simpfun.cn/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=simpfun.cn&sz=64" alt="简幻欢"><span>简幻欢</span>
+                    </a>
+                    <a href="https://lankodata.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=lankodata.com&sz=64" alt="蓝科数据"><span>蓝科数据</span>
+                    </a>
+                    <a href="https://www.craft.moe/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=craft.moe&sz=64" alt="毛玉線圈物語"><span>毛玉線圈物語</span>
+                    </a>
+                    <a href="https://vat.mutong1.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mutong1.com&sz=64" alt="木桶面板"><span>木桶面板</span>
+                    </a>
+                    <a href="https://www.tanggaoyun.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=tanggaoyun.com&sz=64" alt="糖糕云"><span>糖糕云</span>
+                    </a>
+                    <a href="https://www.rhymc.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=rhymc.com&sz=64" alt="旋律工艺"><span>旋律工艺</span>
+                    </a>
+                    <a href="https://cloud.complexstudio.net/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=complexstudio.net&sz=64" alt="逸薯云"><span>逸薯云</span>
+                    </a>
+                    <a href="https://www.rainyun.com/home" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=rainyun.com&sz=64" alt="雨云"><span>雨云</span>
+                    </a>
+                    <a href="https://ocent.net/game/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=ocent.net&sz=64" alt="Ocent 云计算"><span>Ocent 云计算</span>
+                    </a>
+                    <a href="https://my.hosting-minecraft.pro/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=hosting-minecraft.pro&sz=64" alt="Hosting-Minecraft.pro"><span>Hosting-Minecraft.pro</span>
+                    </a>
+                    <a href="https://www.mossfrp.top/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mossfrp.top&sz=64" alt="MossFrp"><span>MossFrp</span>
+                    </a>
+                    <a href="https://www.i9mr.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=i9mr.com&sz=64" alt="墨染云"><span>墨染云</span>
+                    </a>
+                    <a href="https://2m.pub/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=2m.pub&sz=64" alt="2M 短域名"><span>2M 短域名</span>
+                    </a>
+                    <a href="https://www.natfrp.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=natfrp.com&sz=64" alt="Sakura Frp"><span>Sakura Frp</span>
+                    </a>
+                    <a href="https://7bxyun.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=7bxyun.com&sz=64" alt="柏汐云"><span>柏汐云</span>
+                    </a>
+                    <a href="https://server.pro/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=server.pro&sz=64" alt="Server.pro"><span>Server.pro</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 服务器推荐 -->
+            <div class="menu-category" id="server-recommendations">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-star"></i><span>服务器推荐</span>
+                </div>
+                <div class="menu-items">
+                    <a href="https://hypixel.net/" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=hypixel.net&sz=64" alt="Hypixel"><span>Hypixel</span></a>
+                    <a href="https://forum.gamer.com.tw/C.php?bsn=18673&snA=196803" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=gamer.com.tw&sz=64" alt="MinecraftDX"><span>MinecraftDX</span></a>
+                    <a href="https://minecraftonline.com/" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=minecraftonline.com&sz=64" alt="MinecraftOnline"><span>MinecraftOnline</span></a>
+                    <a href="https://earthmc.net/" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=earthmc.net&sz=64" alt="EarthMC"><span>EarthMC</span></a>
+                    <a href="https://wiki.mcnot.pro/" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=mcnot.pro&sz=64" alt="不專業伺服器"><span>不專業伺服器</span></a>
+                    <a href="https://www.mcfallout.net/" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=mcfallout.net&sz=64" alt="廢土伺服器"><span>廢土伺服器</span></a>
+                    <a href="https://mine.candy.moe/" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=candy.moe&sz=64" alt="糖果の無人小島"><span>糖果の無人小島</span></a>
+                    <a href="https://www.mclists.cn/" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=mclists.cn&sz=64" alt="MCLists.cn"><span>MCLists.cn</span></a>
+                    <a href="https://play.mcmod.cn/" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=mcmod.cn&sz=64" alt="找服玩"><span>找服玩</span></a>
+                    <a href="https://findmcserver.com/" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=findmcserver.com&sz=64" alt="FindMCServer"><span>FindMCServer</span></a>
+                    <a href="https://www.mc-list.xyz/" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=mc-list.xyz&sz=64" alt="McList.xyz"><span>McList.xyz</span></a>
+                    <a href="https://minecraftservers.org/" target="_blank" class="menu-item"><img src="https://www.google.com/s2/favicons?domain=minecraftservers.org&sz=64" alt="MinecraftServers.org"><span>MinecraftServers.org</span></a>
+                </div>
+            </div>
+            
+            <!-- 皮肤站分类 -->
+            <div class="menu-category" id="skins">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-palette"></i><span>皮肤站</span>
+                </div>
+                <div class="menu-items">
+                    <a href="https://littleskin.cn/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=littleskin.cn&sz=64" alt="LittleSkin">
+                        <span>LittleSkin</span>
+                    </a>
+                    <a href="https://forgepixel.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=forgepixel.com&sz=64" alt="ForgePixel">
+                        <span>ForgePixel</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 相关站点分类 -->
+            <div class="menu-category" id="related-sites">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-link"></i><span>相关站点</span>
+                </div>
+                <div class="menu-items">
+                    <a href="https://mcnav.fun/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mcnav.fun&sz=64" alt="星导航">
+                        <span>星导航</span>
+                    </a>
+                    <a href="https://www.mcnav.net/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mcnav.net&sz=64" alt="MCNav">
+                        <span>MCNav</span>
+                    </a>
+                    <a href="https://www.mcmod.cn/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mcmod.cn&sz=64" alt="MC 百科">
+                        <span>MC 百科</span>
+                    </a>
+                    <a href="https://mcjpg.org/nav/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mcjpg.org&sz=64" alt="MC 导航 | MCJPG">
+                        <span>MC 导航 | MCJPG</span>
+                    </a>
+                    <a href="https://foskytech.github.io/mclinks-frontend-v1/#/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=foskytech.github.io&sz=64" alt="MC 导航网">
+                        <span>MC 导航网</span>
+                    </a>
+                    <a href="https://bbsmc.net/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=bbsmc.net&sz=64" alt="BBSMC">
+                        <span>BBSMC</span>
+                    </a>
+                    <a href="https://plugin.started.ink/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=plugin.started.ink&sz=64" alt="插件搜索 | Oasis">
+                        <span>插件搜索 | Oasis</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 中文社区分类 -->
+            <div class="menu-category" id="chinese-communities">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-comments"></i><span>中文社区</span>
+                </div>
+                <div class="menu-items">
+                    <a href="https://www.minebbs.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=minebbs.com&sz=64" alt="MineBBS">
+                        <span>MineBBS</span>
+                    </a>
+                    <a href="https://www.minegraph.cn/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=minegraph.cn&sz=64" alt="MGC 中文图形站">
+                        <span>MGC 中文图形站</span>
+                    </a>
+                    <a href="https://www.minecraftzw.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=minecraftzw.com&sz=64" alt="我的世界中文站">
+                        <span>我的世界中文站</span>
+                    </a>
+                    <a href="https://www.minecraftxz.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=minecraftxz.com&sz=64" alt="Minecraft 中文下载站">
+                        <span>Minecraft 中文下载站</span>
+                    </a>
+                    <a href="https://www.tinksp.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=tinksp.com&sz=64" alt="Tinksp 资源论坛">
+                        <span>Tinksp 资源论坛</span>
+                    </a>
+                    <a href="https://www.mczwlt.net/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mczwlt.net&sz=64" alt="红石中继站">
+                        <span>红石中继站</span>
+                    </a>
+                    <a href="https://bbs.mcutc.cn/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mcutc.cn&sz=64" alt="UTCBBS">
+                        <span>UTCBBS</span>
+                    </a>
+                    <a href="https://forum.blmcpia.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=blmcpia.com&sz=64" alt="小黑论坛">
+                        <span>小黑论坛</span>
+                    </a>
+                    <a href="https://klpbbs.com/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=klpbbs.com&sz=64" alt="苦力怕论坛">
+                        <span>苦力怕论坛</span>
+                    </a>
+                    <a href="https://www.mcbbs.co/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=mcbbs.co&sz=64" alt="MCBBS 纪念版">
+                        <span>MCBBS 纪念版</span>
+                    </a>
+                    <a href="https://www.cubezone.cc/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=cubezone.cc&sz=64" alt="方块社区">
+                        <span>方块社区</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 开服&联机指南 -->
+            <div class="menu-category" id="server-guide">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-book-open"></i><span>开服&联机指南</span>
+                </div>
+    <div class="menu-items">
+        <a href="https://8aka.org/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=8aka.org&sz=64" alt="驿站主页">
+            <span>驿站主页</span>
+        </a>
+        <a href="https://doc.natfrp.com/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=doc.natfrp.com&sz=64" alt="首页 | SakuraFrp 帮助文档">
+            <span>首页 | SakuraFrp 帮助文档</span>
+        </a>
+        <a href="https://docs.superiormc.cn/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=docs.superiormc.cn&sz=64" alt="欢迎 | 我的世界高版本服主教程合集">
+            <span>欢迎 | 我的世界高版本服主教程合集</span>
+        </a>
+        <a href="https://www.yuque.com/pixelcloud" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=www.yuque.com&sz=64" alt="PixelCloud 帮助中心">
+            <span>PixelCloud 帮助中心</span>
+        </a>
+        <a href="https://www.yuque.com/simpfun/sfe/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=www.yuque.com&sz=64" alt="简幻欢 · 语雀">
+            <span>简幻欢 · 语雀</span>
+        </a>
+        <a href="https://www.yuque.com/simpfox/simpdoc" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=www.yuque.com&sz=64" alt="简幻欢社区文档">
+            <span>简幻欢社区文档</span>
+        </a>
+        <a href="https://docs.buku.wiki/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=docs.buku.wiki&sz=64" alt="BukuWiki">
+            <span>BukuWiki</span>
+        </a>
+        <a href="https://mcrain.top/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=mcrain.top&sz=64" alt="Easywiki简单开服文档 | 🌿 一站通式服主文档">
+            <span>Easywiki简单开服文档 | 🌿 一站通式服主文档</span>
+        </a>
+        <a href="https://server.alazeprt.top/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=server.alazeprt.top&sz=64" alt="Alazeprt的开服教程">
+            <span>Alazeprt的开服教程</span>
+        </a>
+    </div>
+    <div class="menu-separator"><span>驿站</span></div>
+    <div class="menu-items">
+        <a href="https://nitwikit.8aka.org/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=nitwikit.8aka.org&sz=64" alt="https://nitwikit.8aka.org/">
+            <span>https://nitwikit.8aka.org/</span>
+        </a>
+        <a href="https://nitwikit2.8aka.org/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=nitwikit2.8aka.org&sz=64" alt="https://nitwikit2.8aka.org/">
+            <span>https://nitwikit2.8aka.org/</span>
+        </a>
+        <a href="https://plugins.8aka.org/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=plugins.8aka.org&sz=64" alt="https://plugins.8aka.org/">
+            <span>https://plugins.8aka.org/</span>
+        </a>
+        <a href="https://typewriter.8aka.org/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=typewriter.8aka.org&sz=64" alt="https://typewriter.8aka.org/">
+            <span>https://typewriter.8aka.org/</span>
+        </a>
+        <a href="https://pumpkin.8aka.org/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=pumpkin.8aka.org&sz=64" alt="https://pumpkin.8aka.org/">
+            <span>https://pumpkin.8aka.org/</span>
+        </a>
+        <a href="https://docker.8aka.org/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=docker.8aka.org&sz=64" alt="https://docker.8aka.org/">
+            <span>https://docker.8aka.org/</span>
+        </a>
+    </div>
+            </div>
+            <!-- Wiki & Tools Category START -->
+            <div class="menu-category" id="wiki-tools">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-book"></i><span>Wiki &amp; 工具</span>
+                </div>
+                <div class="menu-separator"><span>标准译名查询</span></div>
+                <div class="menu-items">
+                    <a href="https://github.com/SkyEye-FAST/minecraft_translation_flask" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=github.com&sz=64" alt="GitHub">
+                        <span>Minecraft Translation Flask</span>
+                    </a>
+                    <a href="https://mcst.teahouse.team/" target="_blank" class="menu-item">
+                        <img src="https://www.google.com/s2/favicons?domain=teahouse.team&sz=64" alt="Verdigloss">
+                        <span>Minecraft Standard Translations</span>
+                    </a>
+                </div>
+
+                <div class="menu-separator"><span>Wiki 站点对比</span></div>
+                <div class="wiki-comparison-container">
+                    <div class="wiki-card">
+                        <h3>Fandom</h3>
+                        <p><strong>访问速度：</strong>特别慢，除了加载 wiki 内容还要加载广告和其他脚本；</p>
+                        <p><strong>更新速度：</strong>几乎没有用户更新，已经完全荒废。管理员只剩下几位，偶尔还会会有用户破坏；</p>
+                        <p><strong>推荐指数：</strong>★★☆☆☆</p>
+                        <div class="links">
+                            <a href="https://minecraft.fandom.com/wiki/Minecraft_Wiki" target="_blank">Minecraft Wiki</a>
+                            <a href="https://minecraft.fandom.com/zh/wiki/Minecraft_Wiki" target="_blank">Minecraft Wiki</a>
+                            <a href="https://minecraft.fandom.com/lzh/wiki/Minecraft_Wiki" target="_blank">礦藝大典</a>
+                        </div>
+                    </div>
+                    <div class="wiki-card">
+                        <h3>Weird Gloop</h3>
+                        <p><strong>访问速度：</strong>虽然服务器不设在国内，但访问速度较 Fandom 站快，主要是不需要加载额外的广告图片和乱七八糟的脚本；</p>
+                        <p><strong>更新速度：</strong>全球各地用户实时更新，可以匿名不登录账号编辑 wiki，是 BWiki 镜像的来源；</p>
+                        <p><strong>推荐指数：</strong>★★★★☆</p>
+                        <div class="links">
+                            <a href="https://minecraft.wiki/" target="_blank">英文</a>
+                            <a href="https://zh.minecraft.wiki/" target="_blank">中文</a>
+                            <a href="https://lzh.minecraft.wiki/" target="_blank">文言</a>
+                        </div>
+                    </div>
+                    <div class="wiki-card">
+                        <h3>B 站（BWiki）镜像</h3>
+                        <p><strong>访问速度：</strong>服务器在国内，又是 B 站托管，访问速度比较快；</p>
+                        <p><strong>更新速度：</strong>谁知道呢？</p>
+                        <p><strong>推荐指数：</strong>★★★☆☆</p>
+                        <div class="links">
+                            <a href="https://wiki.biligame.com/mc" target="_blank">Minecraft Wiki</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="menu-separator"><span>Wiki 公告</span></div>
+                <div class="details-container">
+                    <details><summary>为何中文 Minecraft Wiki 加载那么慢？</summary><div class="details-content"><div data-type="tips"><p>来源：<a href="https://www.bilibili.com/opus/288960310142486734" target="_blank">https://www.bilibili.com/opus/288960310142486734</a></p><p>原文最后编辑时间：2019 年 8 月 18 日 16:31 (UTC+8)</p></div><p><strong>太长不看版：2019 年，Minecraft Wiki 在中国大陆访问速度较以往总体有所提升。</strong></p><p></p><p>中文 Minecraft Wiki 于 2017 年暑期发布的一份玩家满意度调查问卷的结果显示，玩家评分最低的项目便是 Minecraft Wiki 的访问速度。接下来我们谈 Minecraft Wiki 在中国大陆的访问状况。</p><p>造成访问网页速度有所变化，主要有三个变量：</p><h2 id="e2BXu">1. 网页内容</h2><p>从某一条目的内容来说，条目文字和图片应该是在逐渐增多的，但是增幅即使较大也不会显著影响网页加载速度。</p><p></p><p>从条目内容之外的加载时间来说，这些内容确有增加。这也是 Minecraft Wiki 管理组无法解决的问题，因为 Minecraft Wiki 是搭建在 Gamepedia 这个 wiki 农场上的，Gamepedia 上的两千多个 wiki 的条目外内容大致相同，这种模板我们无力更改。</p><p></p><p>一个页面上，除了你会浏览的文字和图片外，还有<u>①网页基本的样式</u>，主要是<u>②CSS看得见的广告</u>和<u>③页脚看不见的统计代码</u>。其中②和③项加载时间远超过条目内容的加载时间。</p><p></p><p>在网页右侧的广告都是国外的广告商，加载速度真的不快；不过当你注册了账户且编辑活跃，Gamepedia 赠予你 Gamepedia Pro 服务（之前也可以氪金买，现在只能靠编辑 wiki 获得了），通过免广告的方式加快你的访问速度。又由于 Curse Inc. 被 Fandom Inc.（国外另一个规模巨大的 wiki 农场）收购，因此页脚又加上了来自 Fandom 的巨宽且丑陋的页脚。</p><p></p><p>且不知为何，Curse 为 Gamepedia 上每个 wiki 每个页面都有五六个站长统计代码，还是来自不同的统计网站，这些累赘也拖慢了访问速度。</p><h2 id="SRDlG">2. 服务器的网络条件</h2><p>Gamepedia 所属的 Curse Inc. 先被 Amazon 收收购，在此前后均使用的是 AWS 服务器。手动下载过 Minecraft 本体文件的玩家知道，原来 Amazon AWS 的服务器下载速度有时只有几KB/s。好在 Gamepedia 使用了 Cloudflare 加速，访问速度还算可以（关于 Cloudflare 和百度云加速合作，提供的中国大陆访问加速业务，是需要备案的）。</p><p></p><p>之后 Gamepedia 的 CDN 切换到了 CloudFront（AWS 自家的）。虽然其有北京、上海和宁夏中卫三个国内节点，但也同样需要备案。关于 Cloudflare 和 Cloudfront 的速度对比，我不好下定论，但个人认为应该速度相近。</p><p></p><p>值得注意的是，当前（2019 年 7 月）Gamepedia 和 Wikia 均使用的是 Fastly 网络加速服务美国节点，全国访问 Minecraft Wiki 解析的 IP 是相同的美国节点，但经过 tracert 分析数据包均是通过 Fastly 日本-东京节点转发到美国的。和原来直接解析到不同 Cloudflare/Cloudfront 节点（香港、日本、新加坡）相比，可能受到第三个因素的影响会更大些。</p><h2 id="Cd4sz">3. 访问者的网络条件</h2><p>这点是必须强调的。时常有人在 wiki 群中说「我这里怎么打不开 wiki 了」「我这里直连很快」。这是我个人十分反感的行为。你的个人网络状况根据你的地理位置和运营商决定。每个人网络状况都不同，又有什么可比性呢？</p><p></p><p>所以观测 Minecraft Wiki 的访问速度，我一般使用 ChinaZ 的站点测速，通过计算其中国大陆节点的平均访问情况，来推测 Minecraft Wiki 在国内的访问状况。</p><p></p><p>在连通性方面，2017 年暑期的数据为 60% 左右，在 2018 年底为 80%，2019 年暑期已经达到了 95% 以上，可见访问 Minecraft Wiki 加载超时的概率已经小了许多（可能 Fastly 是一个小众 CDN？）。</p><p></p><p>在网页加载方面，之前全国平均需要 6 秒左右加载完首页。目前沿海地区基本可在 2 秒内加载完首页，内陆地区平均 7 秒左右。</p><p></p><p><strong>结论：Minecraft Wiki 的广告和其他脚本拖慢了访问速度，但可以登录并活跃编辑/使用广告屏蔽插件来做到不显示广告，以加快访问速度。由于 Curse 和 Fandom 的合并产生的 CDN 线路调整，使得 Minecraft Wiki 在内容和广告没有减少的情况下，在中国大陆的总体访问速度有所加快。</strong></p><p></p><p>另外，经过中文 Minecraft Wiki 管理团队的不懈努力，今年下半年将会有中美合作的……</p><p></p><p>欢迎关注微博 <a href="https://weibo.com/u/6184938808" target="_blank">@Minecraft中文Wiki</a> 获取最新消息。</p><hr><p style="text-align: right">作者：ff98sha，中文 Minecraft Wiki 行政员、管理员</p><p style="text-align: right">本文按照 <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/cn/deed.zh-hans" target="_blank">CC BY-NC-SA 3.0 协议</a>发布，转载请以相同协议发布并注明作者。</p></div></details>
+                    <details><summary>中文 Minecraft Wiki 在 BWiki 开设镜像</summary><div class="details-content"><div data-type="tips"><p>来源：<a href="https://www.bilibili.com/opus/368735384886115915" target="_blank">https://www.bilibili.com/opus/368735384886115915</a></p><p>原文最后编辑时间：2024 年 1 月 6 日 23:02 (UTC+8)</p></div><p>2020 年，中文 Minecraft Wiki 在 BiliGame Wiki 上开设镜像站点，地址如下：<a href="https://wiki.biligame.com/mc/%F0%9F%A1%A5" target="_blank">https://wiki.biligame.com/mc/</a>。</p><p></p><p>除直接访问外，还可通过电脑/手机的哔哩哔哩游戏中心，从 <a href="http://www.biligame.com/detail/?id=104786" target="_blank">Minecraft 的游戏详情页</a>进入。</p><p></p><p>B 站的 Wiki 镜像更新频率为至少每月一次，新版本页面将每周同步，保证信息及时更新，为国内 Minecraft 玩家带来最全面最详细的 Minecraft 资料。</p><p></p><p>中文 Minecraft Wiki 是 Minecraft 我的世界官方百科，致力于收集一切与《我的世界》相关的信息与资讯，是人人可参与建设的开放式百科。目前社区的活跃用户与管理员团队正在维护着 3500 余篇条目。</p><p></p><p>目前中文 Minecraft Wiki 的重点仍然是内容建设。对于日常运转以外的行动，Wiki 行政管理团队都会慎重考虑。下面我们就谈一谈在 B 站设立 Wiki 镜像的考虑。</p><h2 id="geng-hao-fu-wu-wiki-du-zhe"><strong>更好服务 Wiki 读者</strong></h2><p>由于网页内容长短不一、服务器和读者访问速度各异，Wiki 的加载速度和响应效果不甚理想。</p><p><br></p><p>在 Wiki 的发展过程中，运营方和行政管理团队都在尽量优化页面大小、改善访问状态，但服务器和 CDN 节点皆位于海外，各种措施收效甚微。但是，在 B 站设立国内镜像后，我们相信访问情况会显著改善。</p><p><br></p><p>如上图，我们在 B 站的镜像响应时间皆处于0.8秒以内，基本可以做到与国内主流网站持平。</p><h2 id="jian-chi-wiki-de-kai-fang-yuan-ze"><strong>坚持 Wiki 的开放原则</strong></h2><p>Wiki 所使用的<a href="https://creativecommons.org/licenses/by-nc-sa/3.0/cn/deed.zh-hans" target="_blank">《知识共享 署名-非商业性使用-相同方式分享 3.0》授权协议</a>表明：</p><div class="ne-quote"><p><strong>第三条 授权</strong></p><p>根据本许可的条款和条件，许可人在此授予您全球性、免版税、非独占并且在本作品的著作权存续期间内均有效的许可，就本作品行使以下权利：</p><p>(1) 复制本作品或将本作品收入一个或多个汇编作品中……</p><p>(3) 发行、公开传播本作品（包括汇编作品中收录的本作品）……</p></div><p>Wiki 是由全体成员贡献的，也应该由全体社区共享。理论上，<strong>任何机构都可以在遵守授权协议的前提下设立镜像。</strong></p><h2 id="gu-li-gui-fan-zhuan-zai"><strong>鼓励规范转载</strong></h2><p>在国内，互联网著作权意识尚薄弱，与国内有经验的运营方合作建立规范的镜像，有助于推动国内其他游戏门户增强署名意识。</p><p></p><p>以上是我们对设立镜像的一些考量。欢迎各位玩家通过私信等渠道提出意见。</p><hr><p style="text-align: right">欢迎关注微博 <a href="https://weibo.com/u/6184938808" target="_blank">@Minecraft中文Wiki</a> 获取最新资讯。</p><p style="text-align: right">中文 Minecraft Wiki 行政员、管理员 ff98sha 发布</p></div></details>
+                    <details><summary>中文 Minecraft Wiki 现已迁移至 zh.minecraft.wiki</summary><div class="details-content"><div data-type="tips"><p>来源：<a href="https://www.bilibili.com/opus/862556594152407049" target="_blank">https://www.bilibili.com/opus/862556594152407049</a></p><p>原文最后编辑时间：2024 年 1 月 17 日 0:12 (UTC+8)</p></div><p>致各位读者：</p><p></p><p>大家好！我们很高兴宣布，中文 Minecraft Wiki 已经从 Fandom迁移到新网址 <a href="http://zh.minecraft.wiki/" target="_blank">zh.minecraft.wiki</a> 了——一切和 Minecraft 有关的信息，在新地方应有尽有！</p><p></p><p>这次迁站的最重要的目的就是改善读者的体验。以下是你在访问新 wiki 时会注意到的一些改动：</p><h2 id="xin-pi-fu">新皮肤</h2><p>你是否也被 Fandom 那丑陋的黄色侧边栏而困扰？这次，我们为 wiki 设计了一套既熟悉又陌生的外观。除此之外，新的 wiki 还有暗色模式（在网页的右上角启用）和固定宽度（目前只有登录用户可以开启，位于参数设置的「小工具」中）的选项。我们还更新了 Logo！</p><h2 id="geng-kuai-de-jia-zai-su-du"><strong>更快的加载速度</strong></h2><p>对于中国大陆用户，<strong>新站的加载速度有明显改善</strong>。这是因为新 wiki 的界面更加简洁，无需加载与无关资源，也不会加载乱七八糟的追踪脚本。</p><h2 id="geng-shao-de-guang-gao"><strong>更少的广告</strong></h2><p>新网站不会再有弹窗、问卷、无关文章或视频广告。每个页面最多只会展示 1 条广告。</p><p></p><p>当前，由于我们还在完善广告基建，页面上暂时不会显示广告。开始显示广告后，我们会再次发布通知，并在广告的位置与选择上做到公开透明。</p><h2 id="geng-hao-de-sou-suo"><strong>更好的搜索</strong></h2><p>你也许曾注意到，Fandom 的搜索结果常常与你的需求不符。现在，新站的搜索引擎更强大、更准确。比如，你可以试试搜索「<code class="ne-code">盔甲纹饰 快照</code>」来找到盔甲纹饰是在 Java 版的哪一个快照中加入的。在 Fandom Wiki 上，你大概率无法用搜索找到这个信息。</p><h2 id="mei-you-nian-ling-tan-chuang-le"><strong>没有年龄弹窗了</strong></h2><p>与 Fandom 不同，我们不会强制你告诉我们你是否已经成年。</p><h2 id="ni-ming-bian-ji-hui-gui"><strong>匿名编辑回归</strong></h2><p>你不再需要创建账号就能编辑 wiki 了。</p><h2 id="wo-men-xu-yao-ni-de-bang-zhu"><strong>我们需要你的帮助！</strong></h2><p>Fandom 并不会关闭已经迁移的 wiki，所以旧的 Fandom Wiki 仍然会留在原地，并在搜索结果里占坑。旧域名「<a href="http://minecraft.gamepedia.com/" target="_blank">minecraft.gamepedia.com</a>」以及「<a href="http://minecraftwiki.net/" target="_blank">minecraftwiki.net</a>」也仍然会跳转至Fandom Wiki。</p><p>因此，为了新 wiki 能够顺利运作起来，我们需要你的帮助！下面是几种帮忙的方式：</p><ul class="ne-ul"><li>分享转发！请告诉你的朋友，我们已经迁到新地方了！</li><li><strong>不再点击 Fandom 链接。</strong>在搜索结果中，每次都请选择 <a href="http://zh.minecraft.wiki/" target="_blank">zh.minecraft.wiki</a> 的链接，不要点击 Fandom 的链接。这样，搜索引擎就会了解哪个网站在用户眼里更优秀。</li><li><strong>不再使用旧域名。</strong>把所有的「<a href="http://zh.minecraftwiki.net/" target="_blank">zh.minecraftwiki.net</a>」「<a href="http://minecraft-zh.gamepedia.com/" target="_blank">minecraft-zh.gamepedia.com</a>」「<a href="https://minecraft.fandom.com/zh" target="_blank">minecraft.fandom.com/zh</a>」链接修改为 <strong>zh.minecraft.wiki</strong>——这会提高我们的知名度，让搜索结果中的排名更靠前。</li><li><strong>协助改进 wiki！</strong>在新 wiki 中，你甚至不需要创建账号就可以进行编辑了！在编辑时需要帮助？来加入我们的 QQ 群或 Discord 来提问，或者看看帮助页面。</li></ul><p>你也可以尝试使用 Indie Wiki Buddy 浏览器扩展，这个扩展会将你自动重定向到我们的新网站，并在搜索引擎中隐藏 Fandom Wiki。</p><h2 id="jiang-gamepediafandom-zhang-hu-qian-yi-zhi-xin-wiki"><strong>将 Gamepedia/Fandom 账户迁移至新 wiki</strong></h2><p>如果需要将你的账户迁移到新 wiki中，请先访问这个页面，并按上面提供的步骤操作。页面中会提示你输入自己的用户名，并验证你在 Fandom Wiki 中的身份。迁移应该只会占用你几分钟。</p><p></p><p>在迁移账户时，所有之前的贡献都会保留。不幸的是，你的用户参数设置（包括监视列表、电子邮箱以及讨论页签名）都不能被迁移，你需要重新设置一遍。</p><p></p><p>如果你在迁移时遇到问题，可以在我们的 QQ 群或 Discord 中告知我们。</p><h2 id="jing-xiang-zhan"><strong>镜像站</strong></h2><p>2020 年，中文 Minecraft Wiki 在 BWiki 和网易设立了镜像站点。设立镜像站点是我们为解决 Fandom 的加载速度不甚理想这一问题而采取的权宜之策。然而，在迁移后，访问速度有了大幅提升，达到了可以接受的程度。此外直接访问源站可以获取最新信息，且所有人均可以编辑更新。因此，两个镜像站将会关闭。</p><p>更新：<a href="about:blank#ud4f4dc04">中文 Minecraft Wiki 在 BWiki 的镜像重新开放</a></p><h2 id="shi-shui-zai-tuo-guan-xin-wiki"><strong>是谁在托管新 wiki？</strong></h2><p>新的 Minecraft Wiki 将由 Weird Gloop 进行托管，这个公司也托管着 RuneScape Wiki。选择它作为服务提供商的原因可以在这个讨论页（英文）中了解。</p><p></p><p>简而言之，我们的新服务提供商广告数量少、技术基建强、透明度也高，在与 Fandom 在有关页面排名的搜索引擎优化竞争中，还取得了优良成绩。Weird Gloop 给予了我们极高的自主权利，几乎相当于自行托管 wiki，他们还有所需的经验来建设与维护 wiki，这一点是我们所没有的。</p><h2 id="wen-yan-wiki-zen-me-ban"><strong>文言 wiki 怎么办？</strong></h2><p>如果你还没有听说的话，我们有一个文言 wiki。</p><p>目前，文言 wiki 的迁移准备工作还在进行之中。我们会尽快完成准备，争取在年底前迁移文言 wiki。</p><h2 id="ping-lun-yu-tao-lun"><strong>评论与讨论</strong></h2><p>如果你还有问题或评论，请在下方留言。</p><p>欢迎关注微博 <a href="https://weibo.com/u/6184938808" target="_blank">@Minecraft中文Wiki</a> 获取最新资讯</p><hr><p style="text-align: right">中文 Minecraft Wiki 团队</p><p style="text-align: right">2023 年 11 月 11 日</p><p style="text-align: right">中文 Minecraft Wiki 行政员、管理员 ff98sha 发布</p></div></details>
+                    <details><summary>中文 Minecraft Wiki 在 BWiki 的镜像重新开放</summary><div class="details-content"><div data-type="tips"><p>来源：<a href="https://www.bilibili.com/opus/887141687280795704" target="_blank">https://www.bilibili.com/opus/887141687280795704</a></p><p>原文最后编辑日期：2024 年 1 月 16 日 16:02 (UTC+8)</p></div><p>2023 年 11 月 11 日，中文 Minecraft Wiki 现已迁移至 zh.minecraft.wiki。同时，2020 年 3 月 20 日开放的中文 MC Wiki 的 BWiki 镜像也暂时关闭。</p><p></p><p>新 wiki 的界面更加简洁，无需加载与无关资源，也不会加载乱七八糟的追踪脚本。因此对于中国大陆用户，新站的加载速度有所改善，在国内大部分地区均能较快加载。</p><p><img src="https://cdn.nlark.com/yuque/0/2025/jpeg/46225278/1761318600720-b9db2413-d83e-4c4f-aa8c-872345e7f928.jpeg" width="1192"></p><p>在我们搬迁到新站点后不久，旧站所在的 Fandom 平台在中国大陆的可访问性急剧下降，我们也庆幸及时搬出了 Fandom 平台。</p><p></p><p>同时我们也接到了许多用户的反馈。由于新站点使用的是 Cloudflare CDN，其在国内某些省份和运营商的网络条件下，访问情况并不理想。反映较多的有河南、福建、江苏、北京等省份。</p><p></p><p><strong>经过综合考虑，中文 Minecraft Wiki 决定重新开放 BiliGame Wiki 上的镜像站点，地址保持不变：</strong><a href="https://wiki.biligame.com/mc/%F0%9F%A1%A5" target="_blank">https://wiki.biligame.com/mc/</a><strong>。</strong></p><hr><p>镜像站点的详情：</p><p>B 站的 Wiki 镜像更新频率与之前相同，每周二同步源站更新全部页面，新版本页面每周多次同步，保证信息及时更新，为国内 Minecraft 玩家带来最全面最详细的 Minecraft 资料。</p><p></p><p>镜像站由中文 Minecraft Wiki 团队维护，如对镜像站有疑问和建议，可在镜像站首页点击「管理员告示版」进入留言。</p><p></p><p>镜像站遵守 CC BY-NC-SA 3.0 协议，同时任何机构都可以在遵守授权协议的前提下设立镜像站点。</p><p></p><p>镜像站因技术限制与源站有部分功能上的差异，我们建议用户在条件允许时访问源站点 zh.minecraft.wiki。对于 Wiki 的编辑也只在源站点进行，欢迎各位玩家一起完善 Wiki。</p><p></p><p>同时，Wiki 还建立了 B 站账号 <a href="https://space.bilibili.com/487789834" target="_blank">@Minecraft中文Wiki</a> 将与其同名微博同步更新。感谢各位玩家对中文 Minecraft Wiki 的支持。</p><hr><p style="text-align: right">中文Minecraft Wiki管理团队</p><p style="text-align: right">2024 年 1 月 16 日</p></div></details>
+                </div>
+            </div><!-- Wiki & Tools Category END -->
+
+            <!-- 技术文档 -->
+            <div class="menu-category" id="tech-docs">
+                <div class="menu-category-title">
+                    <i class="fa-solid fa-file-code"></i><span>技术文档</span>
+                </div>
+    <div class="menu-separator"><span>Java</span></div>
+    <div class="menu-items">
+        <a href="https://docs.oracle.com/javase/8/docs/api/overview-summary.html" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=docs.oracle.com&sz=64" alt="Overview (Java Platform SE 8 )">
+            <span>Overview (Java Platform SE 8 )</span>
+        </a>
+        <a href="https://docs.oracle.com/en/java/javase/17/docs/api/index.html" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=docs.oracle.com&sz=64" alt="Overview (Java SE 17 & JDK 17)">
+            <span>Overview (Java SE 17 & JDK 17)</span>
+        </a>
+        <a href="https://docs.oracle.com/en/java/javase/21/docs/api/index.html" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=docs.oracle.com&sz=64" alt="Overview (Java SE 21 & JDK 21)">
+            <span>Overview (Java SE 21 & JDK 21)</span>
+        </a>
+    </div>
+    <div class="menu-separator"><span>MC 开发</span></div>
+    <div class="menu-items">
+        <a href="https://github.com/mouse0w0/MinecraftDeveloperGuide" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=github.com&sz=64" alt="MinecraftDeveloperGuide">
+            <span>MinecraftDeveloperGuide</span>
+        </a>
+        <a href="https://docs.minecraftforge.net/en/latest/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=docs.minecraftforge.net&sz=64" alt="Forge Documentation">
+            <span>Forge Documentation</span>
+        </a>
+        <a href="https://papermc.io/javadocs" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=papermc.io&sz=64" alt="Javadocs | PaperMC">
+            <span>Javadocs | PaperMC</span>
+        </a>
+        <a href="https://docs.spongepowered.org/stable/zh-CN/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=docs.spongepowered.org&sz=64" alt="Sponge 开发文档 — Sponge 8.0.0 文档">
+            <span>Sponge 开发文档 — Sponge 8.0.0 文档</span>
+        </a>
+        <a href="https://ci.dmulloy2.net/job/ProtocolLib/javadoc/index.html" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=ci.dmulloy2.net&sz=64" alt="ProtocolLib 5.4.0-SNAPSHOT API">
+            <span>ProtocolLib 5.4.0-SNAPSHOT API</span>
+        </a>
+        <a href="https://pluginwiki.github.io/VaultAPI/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=pluginwiki.github.io&sz=64" alt="VaultAPI">
+            <span>VaultAPI</span>
+        </a>
+        <a href="https://mcp.exz.me/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=mcp.exz.me&sz=64" alt="MCP Query">
+            <span>MCP Query</span>
+        </a>
+        <a href="https://purpurmc.org/javadoc/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=purpurmc.org&sz=64" alt="Overview (purpur-api 1.21.8-R0.1-SNAPSHOT API)">
+            <span>Overview (purpur-api 1.21.8-R0.1-SNAPSHOT API)</span>
+        </a>
+        <a href="https://repo.opencollab.dev/javadoc/maven-snapshots/org/geysermc/geyser/api/latest" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=repo.opencollab.dev&sz=64" alt="Geyser API">
+            <span>Geyser API</span>
+        </a>
+        <a href="https://tabooproject.org/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=tabooproject.org&sz=64" alt="TabooProject">
+            <span>TabooProject</span>
+        </a>
+        <a href="https://taboolib.feishu.cn/wiki/Lzf8wFEsfiHclskCuGkctoUNn9b" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=taboolib.feishu.cn&sz=64" alt="TabooLib 开发文档">
+            <span>TabooLib 开发文档</span>
+        </a>
+        <a href="https://docs.neoforged.net/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=docs.neoforged.net&sz=64" alt="NeoForged Documentation | NeoForged docs">
+            <span>NeoForged Documentation | NeoForged docs</span>
+        </a>
+        <a href="https://fabricmc.net/wiki/start" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=fabricmc.net&sz=64" alt="Welcome to the Fabric Wiki! [Fabric Wiki]">
+            <span>Welcome to the Fabric Wiki! [Fabric Wiki]</span>
+        </a>
+    </div>
+    <div class="menu-separator"><span>Bukkit</span></div>
+    <div class="menu-items">
+        <a href="https://docs.zoyn.top/bukkitapi/1.12.2/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=docs.zoyn.top&sz=64" alt="Bukkit 1.12.2-R0.1-SNAPSHOT API 中文文档">
+            <span>Bukkit 1.12.2-R0.1-SNAPSHOT API 中文文档</span>
+        </a>
+    </div>
+    <div class="menu-separator"><span>Spigot</span></div>
+    <div class="menu-items">
+        <a href="https://bukkit.windit.net/javadoc/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=bukkit.windit.net&sz=64" alt="Spigot-API 1.21.6-R0.1-SNAPSHOT API 中文文档">
+            <span>Spigot-API 1.21.6-R0.1-SNAPSHOT API 中文文档</span>
+        </a>
+        <a href="https://hub.spigotmc.org/javadocs/spigot/" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=hub.spigotmc.org&sz=64" alt="Spigot-API R0.1-SNAPSHOT API">
+            <span>Spigot-API R0.1-SNAPSHOT API</span>
+        </a>
+    </div>
+    <div class="menu-separator"><span>BungeeCord</span></div>
+    <div class="menu-items">
+        <a href="https://ci.md-5.net/job/BungeeCord/ws/api/target/apidocs/index.html" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=ci.md-5.net&sz=64" alt="BungeeCord-API 1.21-R0.3-SNAPSHOT API">
+            <span>BungeeCord-API 1.21-R0.3-SNAPSHOT API</span>
+        </a>
+        <a href="https://ci.md-5.net/job/BungeeCord/ws/chat/target/apidocs/index.html" target="_blank" class="menu-item">
+            <img src="https://www.google.com/s2/favicons?domain=ci.md-5.net&sz=64" alt="BungeeCord-Chat 1.21-R0.3-SNAPSHOT API">
+            <span>BungeeCord-Chat 1.21-R0.3-SNAPSHOT API</span>
+        </a>
+    </div>
+            </div>
+        </div>
+        <div class="glass-container" id="55-plus-sites-container">
+            <h2><font style="background-color:rgba(0, 0, 0, 0);">一、官方</font></h2>
+            <ul>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft（我的世界）官网：</font><a href="https://www.minecraft.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.minecraft.net</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Education Edition（我的世界：教育版）官网：</font><a href="https://education.minecraft.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://education.minecraft.net</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">《我的世界》中国版官网：</font><a href="http://mc.163.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">http://mc.163.com</font></a><font style="background-color:rgba(0, 0, 0, 0);">/</font><a href="http://minecraft.cn"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">http://minecraft.cn</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft教育个人版（《我的世界：教育版》中国版）官网：</font><a href="https://meec.meta.youdaozhixue.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://meec.meta.youdaozhixue.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Feedback：</font><a href="https://feedback.minecraft.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://feedback.minecraft.net</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">《我的世界》中国版官方论坛：</font><a href="https://mc.netease.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://mc.netease.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Mojang Jira（Minecraft 漏洞追踪器）：</font><a href="https://bugs.mojang.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://bugs.mojang.com</font></a></li>
+            </ul>
+            <h2><strong><font style="background-color:rgba(0, 0, 0, 0);">二、非官方论坛</font></strong></h2>
+            <ul>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Forum：</font><a href="https://www.minecraftforum.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.minecraftforum.net</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">（已关站）</font><s><font style="color:rgb(115, 92, 255);background-color:rgba(0, 0, 0, 0);">MCBBS-Minecraft 中文论坛：</font></s><a href="https://www.mcbbs.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.mcbbs.net/</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">MineBBS 我的世界中文论坛：</font><a href="https://www.minebbs.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.minebbs.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft 苦力怕论坛：</font><a href="https://klpbbs.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://klpbbs.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">MCHK Minecraft 香港社区：</font><a href="https://www.minecraft-hk.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.minecraft-hk.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Bangbang93 论坛：</font><a href="https://www.bangbang93.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.bangbang93.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Japan Forum：</font><a href="https://minecraftforum.jp"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://minecraftforum.jp</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">한마포 - 한국 마인크래프트 포럼 韩国 Minecraft 论坛：</font><a href="https://www.koreaminecraft.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.koreaminecraft.net</font></a></li>
+            </ul>
+            <h1><font style="background-color:rgba(0, 0, 0, 0);">三、Wiki</font></h1>
+            <ul>
+                <li><a href="https://www.notion.so/Minecraft-Wiki-22b8115e2b8f809cbff2d221ff694b5d?pvs=21"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Minecraft Wiki</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Dig Minecraft：</font><a href="https://www.digminecraft.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.digminecraft.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">MC 百科－MCMOD：</font><a href="https://mcmod.cn"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://mcmod.cn</font></a></li>
+                <li><a href="http://wiki.vg/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Wiki.vg</font></a><font style="background-color:rgba(0, 0, 0, 0);">：</font><a href="https://wiki.vg"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://wiki.vg</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft 插件百科：</font><a href="https://mineplugin.org"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://mineplugin.org</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">基岩版开发文档</font></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft 基岩版开发 Wiki：</font><a href="https://wiki.bedev.cn"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://wiki.bedev.cn</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Bedrock Wiki：</font><a href="https://wiki.bedrock.dev"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://wiki.bedrock.dev</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">MineWiki：</font><a href="https://minewiki.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://minewiki.net</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">bedrock.dev：</font><a href="https://bedrock.dev"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://bedrock.dev</font></a></li>
+            </ul>
+            <h2><strong><font style="background-color:rgba(0, 0, 0, 0);">四、资源站</font></strong></h2>
+            <ul>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">CurseForge：</font><a href="https://www.curseforge.com/minecraft"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.curseforge.com/minecraft</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Modrinth：</font><a href="https://modrinth.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://modrinth.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Planet Minecraft：</font><a href="https://www.planetminecraft.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.planetminecraft.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">MCPEDL：</font><a href="https://mcpedl.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://mcpedl.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Yard：</font><a href="https://www.minecraftyard.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.minecraftyard.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft 中文下载站：</font><a href="http://www.minecraftxz.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">http://www.minecraftxz.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Mods：</font><a href="https://www.minecraftmods.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.minecraftmods.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Maps（我的世界地图）：</font><a href="http://www.minecraftmaps.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">http://www.minecraftmaps.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Shaders（我的世界光影）：</font><a href="https://minecraftshader.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://minecraftshader.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Resources Packs for Minecraft（我的世界资源包）：</font><a href="https://resourcepack.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://resourcepack.net</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Skins（我的世界皮肤）：</font><a href="https://www.minecraftskins.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.minecraftskins.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">MSkins（我的世界皮肤）：</font><a href="https://mskins.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://mskins.net</font></a></li>
+            </ul>
+            <h2><strong><font style="background-color:rgba(0, 0, 0, 0);">五、服务器</font></strong></h2>
+            <ul>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Servers：</font><a href="https://minecraftservers.org"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://minecraftservers.org</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Multiplayer：</font><a href="https://minecraft-mp.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://minecraft-mp.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Servers：</font><a href="https://servers-minecraft.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://servers-minecraft.net</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft 服务器列表：</font><a href="https://www.mclists.cn"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.mclists.cn</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">我的世界找服网：</font><a href="https://www.fansmc.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.fansmc.com</font></a></li>
+            </ul>
+            <h2><strong><font style="background-color:rgba(0, 0, 0, 0);">六、功能性</font></strong></h2>
+            <ul>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">CHUNKBASE（区块查询工具）：</font><a href="https://www.chunkbase.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.chunkbase.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Tools（我的世界工具站）：</font><a href="https://minecraft.tools"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://minecraft.tools</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Nova Skins：</font><a href="https://novaskin.me"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://novaskin.me</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Textcraft：</font><a href="https://textcraft.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://textcraft.net</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Chunker（在线地图转换器）：</font><a href="https://chunker.app"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://chunker.app</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Shapes（建筑辅助）：</font><a href="https://minecraftshapes.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://minecraftshapes.com</font></a></li>
+            </ul>
+            <h2><strong><font style="background-color:rgba(0, 0, 0, 0);">七、其他</font></strong></h2>
+            <ul>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Forge 官网：</font><a href="https://www.minecraftforge.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.minecraftforge.net</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">NeoForge 官网：</font><a href="https://neoforged.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://neoforged.net</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Optifine 官网：</font><a href="https://www.optifine.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.optifine.net</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Optifine 中文网：</font><a href="https://optifine.cn"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://optifine.cn</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Fabric 官网：</font><a href="https://fabricmc.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://fabricmc.net</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Quilt 官网：</font><a href="https://quiltmc.org"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://quiltmc.org</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Iris Shaders 官网：</font><a href="https://irisshaders.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://irisshaders.net</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">LiteLoader 官网：</font><a href="http://www.liteloader.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">http://www.liteloader.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Heads（我的世界装饰性头颅）：</font><a href="https://www.minecraft-heads.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://www.minecraft-heads.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">NameMC（正版玩家信息查询）：</font><a href="https://namemc.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://namemc.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Skin Search（皮肤查询）：</font><a href="https://mcskinsearch.com"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://mcskinsearch.com</font></a></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft UUID（正版玩家信息查询）：</font><a href="https://mcuuid.net"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">https://mcuuid.net</font></a></li>
+            </ul>
+        </div>
+        <div class="glass-container" id="mcisee-container">
+            <h1><font style="background-color:rgba(0, 0, 0, 0);">官方网站（</font><font style="background-color:rgba(0, 0, 0, 0);">©</font><font style="background-color:rgba(0, 0, 0, 0);">Mojang/</font><font style="background-color:rgba(0, 0, 0, 0);">©</font><font style="background-color:rgba(0, 0, 0, 0);">微软）</font></h1>
+            <ul>
+                <li><a href="https://www.minecraft.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Minecraft</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 《我的世界》/《当个创世神》，着重于让玩家探索、交互并改变一个动态生成 1m³ 大小方块的世界</font></li>
+                <li><a href="https://education.minecraft.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Minecraft 教育版</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Minecraft Education，Minecraft 特别为教室使用而设计的教学版本</font></li>
+                <li><a href="https://bugs.mojang.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">漏洞追踪器</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Mojang Jira/Mojira，用于反馈 Bug</font></li>
+                <li><a href="https://bugs-legacy.mojang.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">漏洞追踪器（存档）</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 仅用于存档旧版 Mojira，已停止支持</font></li>
+                <li><a href="https://learn.microsoft.com/minecraft/creator/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版开发者文档</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 了解如何使用附加组件修改 Minecraft。创建皮肤，设计独特的体验，发现最新功能，并发展您作为 Minecraft 创作者的技能</font></li>
+                <li><a href="https://feedback.minecraft.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Feedback</font></a></li>
+                <li><a href="https://feedback.minecraft.net/hc/categories/115000410252-Knowledge-Base"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">知识库</font></a></li>
+                <li><a href="https://classic.minecraft.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">远古版 MC</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 网页版本，需浏览器支持 WebGL</font></li>
+                <li><a href="https://www.minecraft.net/download/server/bedrock"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版专用服务端</font></a></li>
+                <li><a href="https://www.minecraft.net/collectibles/minecraft-collection"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">壁纸集</font></a></li>
+                <li><a href="https://findmcserver.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">服务器列表</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 查找独特且友好的官方服务器</font></li>
+                <li><a href="https://code.org/minecraft"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">编程一小时教程</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 教育版教程</font></li>
+                <li><a href="https://www.minecraft.net/about-dungeons"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">地下城 (Dungeons)</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Minecraft Dungeons，一款动作/冒险角色扮演类电子游戏，现已停更</font></li>
+                <li><a href="https://www.minecraft.net/about-legends"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">传奇 (Legends)</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Minecraft Legends，一款即时动作战略游戏，现已停更</font></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">Minecraft Earth - 一款免费增强现实（AR）手游，现已停更，官网不再维护</font></li>
+                <li><font style="background-color:rgba(0, 0, 0, 0);">故事模式 (Story Mode) - Minecraft: Story Mode，一款具有可点选性、叙事性、章节性的电子游戏，现已停更，官网不再维护</font></li>
+            </ul>
+            <h1><font style="background-color:rgba(0, 0, 0, 0);">官方购买渠道</font></h1>
+            <ul>
+                <li><a href="https://www.minecraft.net/store/minecraft-java-bedrock-edition-pc"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版+Java 版 (Windows)</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 双版本捆绑售卖</font></li>
+                <li><a href="https://www.xbox.com/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版+Java 版 (Xbox)</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Microsoft Xbox</font></li>
+                <li><a href="https://play.google.com/store/apps/details?id=com.mojang.minecraftpe"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版 (Android)</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Google Play，也适用于 ChromeOS</font></li>
+                <li><a href="https://www.amazon.com/Mojang-Minecraft-Pocket-Edition/dp/B00992CF6W/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版 (Fire)</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Amazon Appstore</font></li>
+                <li><a href="https://apps.apple.com/cn/app/id479516143"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版 (iOS)</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - App Store</font></li>
+                <li><a href="https://www.nintendo.com/us/store/products/minecraft-106679/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版 (Nintendo)</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Nintendo Store</font></li>
+                <li><a href="https://xbox.com/games/store/-/9MVXMVT8ZKWC"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版 (Xbox)</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Microsoft Xbox</font></li>
+                <li><a href="https://store.steampowered.com/app/1672970/Minecraft_Dungeons/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">地下城/Dungeons (Windows)</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Valve Steam</font></li>
+                <li><a href="https://store.steampowered.com/app/1928870/Minecraft_Legends/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">传奇/Legends (Windows)</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Valve Steam</font></li>
+                <li><a href="https://shop.minecraft.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">周边商城</font></a></li>
+            </ul>
+            <h1><font style="background-color:rgba(0, 0, 0, 0);">资源板块</font></h1>
+            <ul>
+                <li><a href="https://www.mcnav.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">导航网</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - MCNav</font></li>
+                <li><a href="https://www.123pan.com/s/bSslVv-uc3kh"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">下载中国版</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 由 Ian_zb 收集</font></li>
+                <li><a href="https://www.titaike.cn/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">TITAIKE 地图站</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 集合国内外优质地图</font></li>
+                <li><a href="https://mcpedl.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MCPEDL 资源</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 英文</font></li>
+                <li><a href="https://www.planetminecraft.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">地球资源社区</font></a></li>
+                <li><a href="https://mcpe-planet.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版地球资源社区</font></a></li>
+                <li><a href="https://resourcepack.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">资源包列表</font></a></li>
+                <li><a href="https://www.minecraft.net/collectibles/minecraft-collection"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">官方壁纸集</font></a></li>
+                <li><a href="https://mc.163.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">网易我的世界官网</font></a></li>
+                <li><a href="https://mcicons.ccleaf.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">McIcons 图标库</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 由 ccLeaf 驱动，涵盖各类图标，可制作材质和皮肤</font></li>
+                <li><a href="https://icmods.mineprogramming.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Inner Core 模组</font></a></li>
+                <li><a href="https://eaglercraft.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Eaglercraft</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 在线游玩 Java 版非官方版，需浏览器支持 WebGL</font></li>
+                <li><a href="https://mc.js.cool/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MC.JS</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 在线游玩 Java 版非官方版，需浏览器支持 WebGL</font></li>
+                <li><a href="https://imc.re/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">IMC.RE</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 著名开发团队</font></li>
+                <li><a href="https://yss.minecraft.pe/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">YSS 开发组</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - YSS 开发组由一群热爱 Minecraft 并想让 Minecraft 更好的人组成</font></li>
+                <li><a href="https://littleskin.cn/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">LittleSkin 皮肤站</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 快速、可靠的 Minecraft 皮肤站</font></li>
+                <li><a href="https://mcskin.com.cn/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">红石皮肤站</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 一个免费、自由的 Minecraft 皮肤站，五年历史，稳定可靠！</font></li>
+                <li><a href="https://mcskins.top/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MCSkins.top</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 简单的 Minecraft 皮肤分享站，内含一些皮肤小工具</font></li>
+                <li><a href="https://www.minecraftmaps.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Minecraft Maps</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - This site is dedicated to custom Minecraft saved game worlds or maps as they are more commonly known as.</font></li>
+                <li><a href="https://minecraftshader.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Minecraft Shaders</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - MinecraftShader.com offers an extensive collection of mods created for players who want a fresh Minecraft experience.</font></li>
+                <li><a href="https://www.9minecraft.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">9Minecraft</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - The best resource for Minecraft</font></li>
+                <li><a href="https://minecraftcapes.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">免费披风站</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 英文</font></li>
+                <li><a href="https://www.teacon.cn/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">TeaCon</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 模组开发茶会</font></li>
+                <li><a href="https://www.mualliance.cn/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Minecraft 高校联盟</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - MUA，旨在联合全国高校 MC 爱好者，共同推动高校 MC 生态发展的公益性组织</font></li>
+                <li><a href="https://pixelmap.minegraph.cn/blog/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">像素茶艺地图站</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 用最简单的方式传播好作品</font></li>
+                <li><a href="https://www.minegraph.cn/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MCG 中文图形站</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 国内首个图形资源站</font></li>
+                <li><a href="https://www.neoshader.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MC-NEO 光影站</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 全国首个全授权光影站</font></li>
+                <li><a href="https://icer233.us.kg/VanillaModTutorial/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MC 原版模组入门教程</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 数据包/资源包 指南</font></li>
+                <li><a href="https://forgepixel.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">ForgePixel 中文皮肤站</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 免费获取皮肤/披风 以及免费提供第三方登录服务</font></li>
+                <li><a href="https://techmc.wiki/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">GTMC</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 系统性的技术向MC理论归档</font></li>
+                <li><a href="https://foldcraftlauncher.cn/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">FCL 第三方下载站</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 安全，可靠，快速的 FCL 下载与安卓 Java 相关资源获取站</font></li>
+            </ul>
+            <h1><font style="background-color:rgba(0, 0, 0, 0);">找服玩</font></h1>
+            <ul>
+                <li><a href="https://findmcserver.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">官方服务器列表</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 查找独特且友好的官方服务器</font></li>
+                <li><a href="https://www.mclists.cn/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">服务器列表 (中国大陆)</font></a></li>
+                <li><a href="https://www.fansmc.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">找服网</font></a></li>
+                <li><a href="https://minecraft-mp.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">最好的服务器</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Find all the best Minecraft multiplayer servers on Minecraft-mp.com.</font></li>
+                <li><a href="https://mcl.ist/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">服务器列表</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 英文</font></li>
+                <li><a href="https://play.mcmod.cn/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">服务器列表 (MC 百科)</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 由 MC 百科收集</font></li>
+                <li><a href="https://www.mc-list.xyz/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">服务器列表 (台湾)</font></a></li>
+                <li><a href="https://minecraft.jp/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">服务器列表 (日本)</font></a></li>
+            </ul>
+            <h1>工具箱</h1>
+            <ul>
+                <li><a href="https://namemc.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">NameMC</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 用户名历史皮肤查询等</font></li>
+                <li><a href="https://mcskinsearch.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">筛选皮肤</font></a></li>
+                <li><a href="https://textcraft.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MC 风格艺术字</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Minecraft 风格文字 Logo 生成器</font></li>
+                <li><a href="https://mcg.tuanzi.ink/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">渐变色文字生成器</font></a></li>
+                <li><a href="https://www.mcmod.cn/tools/cbcreator/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">CB Creator 指令生成器</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 由 MC 百科制作</font></li>
+                <li><a href="https://recper.lapis-net.top/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">RE:SMCFcper</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - MC 创作者之新的命令工具</font></li>
+                <li><a href="https://mact.mcisee.top/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">命令自动补全</font></a></li>
+                <li><a href="https://www.chunker.app/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">地图转换器</font></a></li>
+                <li><a href="https://www.chunkbase.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">地图查看网站</font></a></li>
+                <li><a href="https://mc-map.djfun.de/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">图片生成地图</font></a></li>
+                <li><a href="https://rebane2001.com/mapartcraft/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MC 地图艺术工具</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 图片转地图画工具</font></li>
+                <li><a href="https://www.mcseeder.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">地图种子查询</font></a></li>
+                <li><a href="https://minecraftshapes.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">建筑辅助</font></a></li>
+                <li><a href="https://www.gamergeeks.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">超多工具</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - GamerGeeks</font></li>
+                <li><a href="https://minecraft.tools/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">工具网站</font></a></li>
+                <li><a href="https://mc.metamo.cn/tool/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">在线工具</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 元魔幻界</font></li>
+                <li><a href="https://www.mcskinrecolor.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">皮肤改色器</font></a></li>
+                <li><a href="https://www.minepix.app/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">皮肤生成壁纸</font></a></li>
+                <li><a href="https://mcskins.top/avatar-maker"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">皮肤生成头像</font></a></li>
+                <li><a href="https://mcuuid.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">正版玩家信息查询</font></a></li>
+                <li><a href="https://aternos.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Aternos 免费开服</font></a></li>
+                <li><a href="https://simpfun.cn/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">简幻欢公益面板服</font></a></li>
+                <li><a href="https://www.blockbench.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">3D 模型编辑器</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 建模工具 BlockBench</font></li>
+                <li><a href="https://misode.github.io/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">数据包生成器</font></a></li>
+                <li><a href="https://www.mcneko.com/tools/3dtotem/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版 3D 图腾生成器</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 将皮肤转换为 3D 图腾</font></li>
+                <li><a href="https://dislink.github.io/midi2mcfunction/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MIDI 音乐转 mcpack</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - MIDI 音乐转为播放音乐的 mcpack 行为包</font></li>
+                <li><a href="https://dislink.github.io/midi2tiles/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MIDI 音乐转瀑布流</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - MIDI 音乐转为可视化音符瀑布流 mcpack 行为包</font></li>
+                <li><a href="https://dislink.github.io/img2mcfunction/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">图片转像素画</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 图片转为放置方块的 mcpack 行为包</font></li>
+                <li><a href="https://dislink.github.io/text2mcfunction/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">文字转粒子画</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 文字转为粒子画的 mcpack 行为包</font></li>
+                <li><a href="https://dislink.github.io/mcfunction2bdx/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MCFunction 转结构</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - MCFunction 文件转为 bdump v3 结构文件</font></li>
+                <li><a href="https://mcpack.mcisee.top/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MCPack 清单生成器</font></a></li>
+                <li><a href="https://www.minecraft-heads.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">装饰性头颅</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 头颅收集站</font></li>
+                <li><a href="https://armortrims.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">盔甲纹饰预览</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 可以预览盔甲锻造纹饰效果</font></li>
+                <li><a href="https://colorize.fun/minecraft"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">多彩文字生成</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 像素风格多彩文本生成器</font></li>
+                <li><a href="https://github.com/FrederoxDev/Amethyst"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Amethyst</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 基岩版客户端模组构建器</font></li>
+                <li><a href="https://bridge-core.app/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">bridge.</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 用于开发附加包的 IDE，轻便、强大、易用！</font></li>
+                <li><a href="https://mcreator.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MCreator</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 开源软件，界面直观易学，集成代码编辑器，便于制作模组、数据包和附加包</font></li>
+                <li><a href="https://www.minecraft-dot.pictures/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Minecraft Dot</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 用 Minecraft 的方块渲染图片!</font></li>
+                <li><a href="https://mccteam.github.io/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MCC 客户端控制台</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 用 C# 实现的轻量级开源 Java 版客户端</font></li>
+                <li><a href="https://objtoschematic.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">3D 模型转 MC 方块格式工具</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 一款将 3D 模型转换为 Minecraft 方块格式的工具</font></li>
+                <li><a href="https://autosaved.org/spritecraft"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MC 像素画工具</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 图片转像素画工具</font></li>
+                <li><a href="https://www.plotz.co.uk/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">图形生成器</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 生成多种立体图形</font></li>
+                <li><a href="https://meme.teahouse.team/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">梗体中文在线构建</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 在线构建不同版本梗体中文语言包</font></li>
+                <li><a href="https://dev.lran.top/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">网易开发者收益计算</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 网易开发者收益计算工具</font></li>
+                <li><a href="https://lraty-li.github.io/Minecraft-Cape-Generator/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">披风编辑器</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 在线下载后可上传 png 图片，有损，支持各设备浏览器编辑使用</font></li>
+                <li><a href="https://tools.sodamc.com/resources/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">服主工具页</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 基于开源项目 birdflop 构建的网站，新增 Tellraw（基于GitHubTellraw），包含大多数服主所用的工具</font></li>
+                <li><a href="https://sparkcn.site/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Spark 中文查看器</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 将报告链接中的主域替换为 sparkcn.site 即可查看中文版的 Sprak 报告，项目基于 spark-viewer</font></li>
+                <li><a href="https://mc.ecylt.top/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">ColorBlock 指令生成器</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 生成 ColorBlock Mod 实现的粒子特效指令</font></li>
+                <li><a href="https://github.com/louis-e/arnis"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Arnis</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Generate any location from the real world in Minecraft Java Edition with a high level of detail.</font></li>
+                <li><a href="https://github.com/pilgrimage233/Minecraft-Rcon-Manage"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">若依 Minecraft 服务器管理框架</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 专为 Minecraft 服务器主打造的全能管理方案</font></li>
+                <li><a href="http://github.com/SlopeCraft/SlopeCraft"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">SlopeCraft</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - MC 地图画生成器</font></li>
+                <li><a href="https://scriptirc.io/chat"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Scriptirc</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 基于 AI+Scriptirc 生成 Bukkit 服务器插件</font></li>
+            </ul>
+            <h1><font style="background-color:rgba(0, 0, 0, 0);">百科全书</font></h1>
+            <ul>
+                <li><a href="https://learn.microsoft.com/minecraft/creator/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">官方基岩版开发者文档</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 了解如何使用附加组件修改 Minecraft——创建皮肤、设计独特的体验、发现最新功能，并发展您作为Minecraft创作者的技能</font></li>
+                <li><a href="https://wiki.mcbe-dev.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版开发 wiki</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 可以获取到各种关于基岩版开发的信息</font></li>
+                <li><a href="https://bedrock.dev/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版文档</font></a></li>
+                <li><a href="https://wiki.bedrock.dev/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版维基百科</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - This wiki is a knowledge-sharing website for technical features of Minecraft Bedrock, containing documentation, tutorials, and general how-to information.</font></li>
+                <li><a href="https://mineplugin.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">插件百科</font></a></li>
+                <li><a href="https://app.gitbook.com/o/rzInUn4UJAvS9UzvMuXf/s/lKb3Z5TWv1nyBRImL6za/~/changes/16/toolbox/minecraft-wiki"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Minecraft Wiki</font></a></li>
+                <li><a href="https://wiki.biligame.com/mcplayer/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">玩家社区 wiki</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 由喜爱 Minecraft 的中国玩家组成的民间攻略组织，基本上已停更</font></li>
+                <li><a href="https://mcmod.cn/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MC 百科</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - mcmod.cn</font></li>
+                <li><a href="https://www.digminecraft.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">DigMinecraft 教程</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 通过图片和分步说明来回答您的游戏问题</font></li>
+                <li><a href="https://mouse0w0.github.io/MinecraftDeveloperGuide/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MC 开发者中文指南</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 跟着大佬的脚步学习如何开发 MC</font></li>
+                <li><a href="https://mcbeui.netlify.app/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版 JSONUI 文档</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 在线学习如何制作基岩版 UI 包</font></li>
+                <li><a href="https://projectxero.top/sapi/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版 SAPI 文档</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Script API（</font>原 Gametest Framework<font style="background-color:rgba(0, 0, 0, 0);">）文档</font></li>
+                <li><a href="https://code.org/minecraft"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">编程一小时教程</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 教育版教程</font></li>
+                <li><a href="https://mc.163.com/dev/guide.html"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">网易我的世界开发指南</font></a></li>
+            </ul>
+            <h1><font style="background-color:rgba(0, 0, 0, 0);">PVP/辅助/作弊端</font></h1>
+            <div class="danger">
+                <p><font style="color:rgb(211, 61, 61);background-color:rgba(0, 0, 0, 0);">仅供学习交流，严禁用于非法用途！</font></p>
+            </div>
+            <ul>
+                <li><a href="https://www.lunarclient.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Lunar Client</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，PVP 客户端启动器</font></li>
+                <li><a href="https://labymod.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">LabyMod Launcher</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，辅助客户端启动器</font></li>
+                <li><a href="https://www.badlion.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Badlion</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，PVP 客户端启动器</font></li>
+                <li><a href="https://liquidbounce.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">LiquidBounce</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，作弊客户端启动器</font></li>
+                <li><a href="https://meteorclient.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Meteor Client</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，作弊客户端启动器</font></li>
+                <li><a href="https://feathermc.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Feather Client</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，PVP 客户端启动器</font></li>
+                <li><a href="https://www.vape.gg/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Vape</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，作弊客户端启动器</font></li>
+                <li><a href="https://www.soarclient.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Soar Client</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，PVP 客户端启动器</font></li>
+                <li><a href="https://www.salwyrr.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Salwyrr Launcher</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，辅助客户端启动器</font></li>
+                <li><a href="https://www.cm-pack.pl/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">CMCLIENT</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，PVP 客户端启动器</font></li>
+                <li><a href="https://horion.download/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Horion</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 基岩版，DLL 注入器，仅限 Windows</font></li>
+                <li><a href="https://borion-updated.github.io/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Borion</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 基岩版，DLL 动态库，仅限 Windows</font></li>
+                <li><a href="https://atlasclient.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Atlas Client</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 基岩版，辅助客户端启动器，仅限 Android</font></li>
+            </ul>
+            <h1><font style="background-color:rgba(0, 0, 0, 0);">基岩版版本库/启动器</font></h1>
+            <ul>
+                <li><a href="https://mcapks.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">苦力怕论坛源</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - MCAPKS 版本库</font></li>
+                <li><a href="https://mcbedl.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MineBBS 源</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - MCDL 版本库</font></li>
+                <li><a href="https://www.mcappx.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MCAPPX 源</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Minecraft for Windows 版本库</font></li>
+                <li><a href="http://mcbbk.blmcpia.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">甘泉版本库</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 原像素科技</font></li>
+                <li><a href="https://mcpe-planet.com/downloads/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">地球社区源</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - apk 下载，英文</font></li>
+                <li><a href="https://bbk.endyun.ltd/main"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MCfA 版本库</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Minecraft for Android 版本库</font></li>
+                <li><a href="https://mcarc.spectrollay.com/minecraft_repository/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">星月版本库</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 星月 Minecraft 版本库</font></li>
+                <li><a href="https://res.nullatom.com/Minecraft/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">原子资源库</font></a></li>
+                <li><a href="https://bedrocklauncher.github.io/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">电脑端启动器</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Bedrock Launcher Lite，仅限 Windows</font></li>
+            </ul>
+            <h1><font style="background-color:rgba(0, 0, 0, 0);">服务端</font></h1>
+            <ul>
+                <li><a href="https://mcversions.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MCVersions</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，提供原版服务端核心和客户端核心</font></li>
+                <li><a href="https://www.fastmirror.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">FastMirror</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，免费且高速的服务器核心下载加速镜像，实时同步上游核心构建，由物语云计算提供支持</font></li>
+                <li><a href="https://mirror.polars.cc/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">极星镜像</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，极星云镜像站</font></li>
+                <li><a href="https://github.com/Akarin-project/Akarin"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Akarin</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，支持多线程，基于 Paper、TorchSpigot 的后作</font></li>
+                <li><a href="https://github.com/IzzelAliz/Arclight"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Arclight</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，A Bukkit server implementation on common mod loaders.</font></li>
+                <li><a href="https://catmc.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">CatServer</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，稳定、支持 Bukkit 和 Forge 架构的老牌服务端，内含广告</font></li>
+                <li><a href="https://getbukkit.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">CraftBukkit</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，更新快，插件核心的开山始祖；由 BukkitMC 团队开发，现由 SpigotMC 团队接管</font></li>
+                <li><a href="https://fabricmc.net/use/server/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Fabric Server</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，Fabric 官方服务端核心</font></li>
+                <li><a href="https://mohistmc.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MohistMC</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，优化好，兼容 Bukkit、Spigot、Paper 的 Forge 服务端</font></li>
+                <li><a href="https://papermc.io/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Paper</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，速度快，优化好，安全性高，内置小型反作弊；由 PaperMC 团队开发，基于 Spigot</font></li>
+                <li><a href="https://purpurmc.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Purpur</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，极致优化、轻量，全兼容 Bukkit 架构；基于PutterFish</font></li>
+                <li><a href="https://www.spigotmc.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Spigot</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，老牌核心，稳定、更新快、安全性高；由 SpigotMC 团队开发，基于 CraftBukkit</font></li>
+                <li><a href="https://spongepowered.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Sponge</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，由社区驱动的开源 Java 版模组修改平台</font></li>
+                <li><a href="https://github.com/Tuinity/Tuinity"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Tuinity</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，性能好，基于 Paper</font></li>
+                <li><a href="https://www.minecraft.net/download/server/bedrock"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">官方基岩版专用服务端</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 不支持插件</font></li>
+                <li><a href="https://www.minebbs.com/bds/history"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版专用服务端</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 由 MineBBS 收集</font></li>
+                <li><a href="https://www.minebbs.com/resources/bedrock-dedicated-server-preview.4934/history"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版专用预览版服务端</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 由 MineBBS 收集</font></li>
+                <li><a href="https://github.com/bdsx/bdsx"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">BDSX</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 基岩版，BDS 模组（由 Node.js 编写）</font></li>
+                <li><a href="https://endstone.dev/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Endstone</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 基岩版，适用于 BDS 的高层次插件 API，采用 Python 和 C++ 语言编写</font></li>
+                <li><a href="https://lamina.levimc.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">LeviLamina</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 基岩版，原 LiteLoaderBDS，轻量、模块化、多功能的 BDS 模组加载器</font></li>
+                <li><a href="https://leavesmc.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Leaves</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，一个旨在修复被破坏的原版特性的 Paper 分支</font></li>
+                <li><a href="https://www.leafmc.one/zh/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Leaf</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，一个 Paper 分支, 专注于寻找性能优化、Vanilla、稳定之间的平衡，为大型网络、密集和高承载量场景设计</font></li>
+                <li><a href="https://luminolsuki.moe/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Luminol</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Java 版，致力于推动 Folia 生态的创新，为现代 Minecraft 服务端生态提供高性能解决方案</font></li>
+                <li><a href="https://pmmp.io/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">PocketMine</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 基岩版，一款高度可定制的基岩版服务器软件</font></li>
+                <li><a href="https://docs.allaymc.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Allay</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 基岩版，可靠，快速及富特性的第三方基岩版服务端</font></li>
+                <li><a href="https://cloudburstmc.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Nukkit</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 基岩版，支持插件，使用 Java 开发</font></li>
+            </ul>
+            <h1><font style="background-color:rgba(0, 0, 0, 0);">快查网站 (可供快速查询的网站)</font></h1>
+            <ul>
+                <li><a href="https://app.gitbook.com/o/rzInUn4UJAvS9UzvMuXf/s/lKb3Z5TWv1nyBRImL6za/~/changes/16/toolbox/minecraft-wiki"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Minecraft Wiki</font></a></li>
+                <li><a href="https://www.curseforge.com/minecraft/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">CurseForge</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Minecraft Mods on CurseForge - The Home for the Best Minecraft Mods</font></li>
+                <li><a href="https://modrinth.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Modrinth</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Discover, play, and share Minecraft content through our open-source platform built for the community.</font></li>
+                <li><a href="https://mcmod.cn/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MC 百科</font></a></li>
+                <li><a href="https://ca.projectxero.top/idlist/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版 ID 表</font></a></li>
+                <li><a href="http://mcid.lingningyu.cn/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Java 版 ID 表</font></a></li>
+                <li><a href="https://wiki.mcbe-dev.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版开发维基</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Minecraft 基岩版开发 wiki，可以获取到各种关于基岩版开发的信息</font></li>
+                <li><a href="https://mineplugin.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">插件百科</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 服务器插件 wiki</font></li>
+            </ul>
+            <h1><font style="background-color:rgba(0, 0, 0, 0);">加载器 (模组/光影)</font></h1>
+            <ul>
+                <li><a href="https://modrinth.com/mod/canvas"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Canvas</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 光影加载器 (1.14-1.20.5)</font></li>
+                <li><a href="https://modrinth.com/mod/embeddium"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Embeddium</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 光影加载器 (1.16.5-1.21.4)</font></li>
+                <li><a href="https://fabricmc.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Fabric</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 模组加载器 (1.14+)</font></li>
+                <li><a href="https://www.minecraftforge.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Forge</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 模组加载器 (远古版本起)</font></li>
+                <li><a href="https://www.irisshaders.dev/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Iris</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 光影加载器 (1.16+)</font></li>
+                <li><a href="https://legacyfabric.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Legacy Fabric</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 模组加载器 (1.2.5-1.13.2)</font></li>
+                <li><a href="https://www.liteloader.com/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">LiteLoader</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 模组加载器 (1.3.2-1.12.2)</font></li>
+                <li><a href="https://neoforged.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">NeoForge</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 模组加载器 (1.20.1+)</font></li>
+                <li><a href="https://modrinth.com/mod/oculus"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Oculus</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 光影加载器 (1.16.5-1.20.1)</font></li>
+                <li><a href="https://www.optifine.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">OptiFine</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 光影加载器 (远古版本-1.21.4)</font></li>
+                <li><a href="https://quiltmc.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Quilt</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 模组加载器 (1.14+)</font></li>
+                <li><a href="https://www.curseforge.com/minecraft/mc-mods/rift"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Rift</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 模组加载器 (1.13-1.13.2)</font></li>
+            </ul>
+            <h1><font style="background-color:rgba(0, 0, 0, 0);">开发者专用</font></h1>
+            <ul>
+                <li><a href="https://fabricmc.net/wiki/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Fabric 维基</font></a></li>
+                <li><a href="https://docs.fabricmc.net/develop/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Fabric 文档</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Fabric 模组开发文档 (1.20.4+)</font></li>
+                <li><a href="https://docs.minecraftforge.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Forge 文档</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Forge 模组开发文档 (1.12+)</font></li>
+                <li><a href="https://forge.gemwire.uk/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Forge 社区维基</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Forge 社区开发文档 (1.16~1.19)</font></li>
+                <li><a href="https://docs.architectury.dev/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Architectury 文档</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Architectury 工具链模组开发文档</font></li>
+                <li><a href="https://wiki.quiltmc.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Quilt 开发者维基</font></a></li>
+                <li><a href="https://docs.neoforged.net/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">NeoForged 文档</font></a></li>
+                <li><a href="https://github.com/DimensionalDevelopment/Rift/wiki/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Rift 维基</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Rift 模组开发文档</font></li>
+                <li><a href="https://sinytra.org/docs/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Sinytra 文档</font></a></li>
+                <li><a href="https://moddedmc.wiki/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">模组 Minecraft 维基</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 供模组社区托管和分享自己模组文档的公共平台</font></li>
+                <li><a href="https://shedaniel.gitbook.io/cloth-config/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Cloth Config 维基</font></a></li>
+                <li><a href="https://minecraft-cursed-legacy.github.io/wiki/index.html"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Cursed Legacy Fabric 文档</font></a></li>
+                <li><a href="https://github.com/ModificationStation/StationAPI/wiki"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">StationAPI 维基</font></a></li>
+                <li><a href="https://docs.papermc.io/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">PaperMC 文档</font></a></li>
+                <li><a href="https://docs.spongepowered.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Sponge 文档</font></a></li>
+                <li><a href="https://www.spigotmc.org/wiki/index/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Spigot 维基</font></a></li>
+                <li><a href="https://bukkit.fandom.com/wiki/Main_Page/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Bukkit 维基</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - BukkitWiki</font></li>
+                <li><a href="https://github.com/SpongePowered/Mixin/wiki/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">SpongeMixin 维基</font></a></li>
+                <li><a href="https://github.com/LlamaLad7/MixinExtras/wiki/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MixinExtras 维基</font></a></li>
+                <li><a href="https://github.com/Bawnorton/MixinSquared/wiki/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">MixinSquared 维基</font></a></li>
+                <li><a href="https://parchmentmc.org/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Parchment</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Mojmap 参数名称修补和 JavaDoc 补全附加的映射</font></li>
+                <li><a href="https://linkie.shedaniel.dev/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Linkie</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - 快速查询 Java 版开发所需要的依赖与映射</font></li>
+                <li><a href="https://fabricmc.net/develop/template/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Fabric 模组模板生成器</font></a></li>
+                <li><a href="https://neoforged.net/mod-generator/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">NeoForge 模组模板生成器</font></a></li>
+                <li><a href="https://generate.architectury.dev/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Architectury 模组模板生成器</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Architectury 工具链模组开发模板生成器</font></li>
+                <li><a href="https://quiltmc.org/en/usage/generator/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">Quilt 模组模板生成器</font></a></li>
+                <li><a href="https://mctools.dev/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版创作者工具</font></a><font style="background-color:rgba(0, 0, 0, 0);"> - Minecraft Creator Tools，快速创建附加包模板</font></li>
+                <li><a href="https://github.com/Mojang/bedrock-samples"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版官方模板</font></a></li>
+                <li><a href="https://learn.microsoft.com/en-us/minecraft/creator/scriptapi/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版官方脚本 API 文档</font></a></li>
+                <li><a href="https://learn.microsoft.com/en-us/minecraft/creator/reference/content/entityreference/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版官方实体 API Json 文档</font></a></li>
+                <li><a href="https://learn.microsoft.com/en-us/minecraft/creator/reference/content/molangreference/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">基岩版官方 Molang 文档</font></a></li>
+            </ul>
+            <h1><font style="background-color:rgba(0, 0, 0, 0);">友情链接</font></h1>
+            <ul>
+                <li><a href="https://mact.mcisee.top/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">命令自动补全</font></a></li>
+                <li><a href="https://lapis-net.top/"><font style="color:rgb(48, 127, 152) !important;background-color:rgba(0, 0, 0, 0);">LapisNet</font></a></li>
+            </ul>
+        </div>
+        <div class="glass-container" id="minecraft-download-container">
+            <h1><a href="https://zh.minecraft.wiki/w/Tutorial:%E4%B8%8B%E8%BD%BD%E3%80%81%E5%AE%89%E8%A3%85%E4%B8%8E%E8%B4%AD%E4%B9%B0">教程:下载、安装与购买</a></h1>
+            <h1>正版购买</h1>
+            <h2>官网</h2>
+            <blockquote>
+                <p><font style="color:rgb(101, 105, 115);">适用平台：</font><code><font style="color:rgb(0, 136, 71);background-color:rgb(247, 247, 247) !important;">Android</font></code><code><font style="color:rgb(48, 127, 152);background-color:rgb(247, 247, 247) !important;">Windows</font></code><code><font style="color:rgb(101, 105, 115);background-color:rgb(247, 247, 247) !important;">iOS</font></code><code><font style="color:rgb(101, 105, 115);background-color:rgb(247, 247, 247) !important;">MacOS</font></code><code><font style="color:rgb(185, 94, 4);background-color:rgb(247, 247, 247) !important;">Linux</font></code><code><font style="color:rgb(211, 61, 61);background-color:rgb(247, 247, 247) !important;">其他</font></code></p>
+            </blockquote>
+            <p><a href="https://www.minecraft.net/zh-hans">欢迎来到 Minecraft 官方网站</a></p>
+            <h2>中国版</h2>
+            <blockquote>
+                <p><font style="color:rgb(101, 105, 115);">适用平台：</font><code><font style="color:rgb(0, 136, 71);background-color:rgb(247, 247, 247) !important;">Android</font></code><code><font style="color:rgb(48, 127, 152);background-color:rgb(247, 247, 247) !important;">Windows</font></code><code><font style="color:rgb(101, 105, 115);background-color:rgb(247, 247, 247) !important;">iOS</font></code></p>
+            </blockquote>
+            <p><a href="http://mc.163.com/">《我的世界》官网-全新视界 探索无限</a></p>
+            <h2>Microsoft Store</h2>
+            <blockquote>
+                <p><font style="color:rgb(101, 105, 115);">适用平台：</font><code><font style="color:rgb(48, 127, 152);background-color:rgb(247, 247, 247) !important;">Windows</font></code></p>
+            </blockquote>
+            <p><a href="https://www.xbox.com/zh-cn/games/store/minecraft-java-bedrock-edition-for-pc/9nxp44l49shj">购买 Minecraft: Java &amp; Bedrock Edition for PC | Xbox</a></p>
+            <h2>Google Play</h2>
+            <blockquote>
+                <p><font style="color:rgb(101, 105, 115);">适用平台：</font><code><font style="color:rgb(0, 136, 71);background-color:rgb(247, 247, 247) !important;">Android</font></code></p>
+            </blockquote>
+            <p><a href="https://play.google.com/store/apps/details?id=com.mojang.minecraftpe">https://play.google.com/store/apps/details?id=com.mojang.minecraftpe</a></p>
+            <p>Minecraft - Google Play 上的应用</p>
+            <h2>App Store</h2>
+            <blockquote>
+                <p><font style="color:rgb(101, 105, 115) !important;">适用平台：</font><code><font style="color:rgb(101, 105, 115) !important;background-color:rgb(247, 247, 247) !important;">iOS</font></code></p>
+            </blockquote>
+            <ul>
+                <li>港区：<a href="https://apps.apple.com/hk/app/minecraft/id479516143"><font style="color:rgb(48, 127, 152) !important;">https://apps.apple.com/hk/app/minecraft/id479516143</font></a></li>
+                <li>台区：<a href="https://apps.apple.com/tw/app/minecraft/id479516143"><font style="color:rgb(48, 127, 152) !important;">https://apps.apple.com/tw/app/minecraft/id479516143</font></a></li>
+            </ul>
+            <p>更详细的购买指南：<a href="https://mcarc.spectrollay.com/minecraft_repository/guidance/how_to_buy.html"><font style="color:rgb(48, 127, 152) !important;">https://mcarc.spectrollay.com/minecraft_repository/guidance/how_to_buy.html</font></a></p>
+            <h1>国际版下载</h1>
+            <h2>Java 版</h2>
+            <ul>
+                <li><strong>官方：</strong><a href="https://www.minecraft.net/zh-hans/download"><strong><font style="color:rgb(48, 127, 152) !important;">下载 Minecraft 及服务器软件 | Minecraft</font></strong></a></li>
+                <li><strong>BMCL：</strong><a href="https://www.mcbbs.net/thread-137254-1-1.html"><font style="color:rgb(48, 127, 152) !important;">原贴</font></a>、<a href="https://web.archive.org/web/*/https://www.mcbbs.net/thread-137254-1-1.html"><font style="color:rgb(48, 127, 152) !important;">原贴备份</font></a></li>
+                <li><strong>PCL2：</strong><a href="https://afdian.com/a/LTCat"><font style="color:rgb(48, 127, 152) !important;">爱发电主页</font></a>、<a href="https://afdian.com/p/0164034c016c11ebafcb52540025c377"><font style="color:rgb(48, 127, 152) !important;">正式版下载</font></a>、<a href="https://pcl-community.github.io/"><font style="color:rgb(48, 127, 152) !important;">第三方社区</font></a></li>
+                <li><strong>HMCL：</strong><a href="https://hmcl.huangyuhui.net/"><font style="color:rgb(48, 127, 152) !important;">Hello Minecraft! Launcher</font></a></li>
+                <li><a href="https://multimc.org/"><font style="color:rgb(48, 127, 152) !important;">MultiMC - Manage Minecraft instances with ease</font></a></li>
+                <li><a href="https://prismlauncher.org/"><font style="color:rgb(48, 127, 152) !important;">Prism Launcher</font></a></li>
+                <li><a href="https://feathermc.com/"><font style="color:rgb(48, 127, 152) !important;">Feather Client</font></a></li>
+                <li><a href="https://www.bakaxl.com/"><font style="color:rgb(48, 127, 152) !important;">BakaXL 启动器 - 新一代 Minecraft 崩坏启动器</font></a></li>
+                <li><a href="https://www.labymod.net/zh_Hans"><font style="color:rgb(48, 127, 152) !important;">LabyMod 4 - The Ultimate Free Minecraft Client</font></a></li>
+                <li><a href="https://www.lunarclient.com/"><font style="color:rgb(48, 127, 152) !important;">The #1 Free Minecraft Client | Lunar Client</font></a></li>
+                <li><a href="https://www.nsiso.com/launcher/index.html"><font style="color:rgb(48, 127, 152) !important;">Nsiso 启动器 - 我的世界-Minecraft 启动器</font></a></li>
+                <li><a href="https://tlauncher.org/en/"><font style="color:rgb(48, 127, 152) !important;">TLauncher — Download Minecraft Launcher</font></a></li>
+                <li><a href="https://www.badlion.net/minecraft-client"><font style="color:rgb(48, 127, 152) !important;">The Best All-in-One Minecraft Mod Library | Badlion Client</font></a></li>
+                <li><a href="https://xmcl.app/zh/"><font style="color:rgb(48, 127, 152) !important;">X Minecraft Launcher - 一个现代化的 Minecraft 启动器 | X Minecraft Launcher</font></a></li>
+                <li><a href="https://corona.studio/lx"><font style="color:rgb(48, 127, 152) !important;">LauncherX</font></a></li>
+                <li><a href="https://modrinth.com/app"><font style="color:rgb(48, 127, 152) !important;">Modrinth App</font></a></li>
+                <li><a href="https://mc.sjtu.cn/sjmcl/zh">SJMC Launcher - 新一代开源跨平台 Minecraft 启动器</a></li>
+            </ul>
+            <h2>基岩版</h2>
+            <ul>
+                <li><a href="https://mcbbk.blmcpia.com/"><font style="color:rgb(48, 127, 152) !important;">甘泉版本库</font></a>（已关停）</li>
+                <li><a href="https://www.mcappx.com/"><font style="color:rgb(48, 127, 152) !important;">MCAPPX 版本库</font></a></li>
+                <li><a href="https://mcarc.github.io/"><font style="color:rgb(48, 127, 152) !important;">Minecraft 版本库</font></a>（停更且资源完全失效）</li>
+                <li><a href="https://bedrocklauncher.github.io/"><font style="color:rgb(48, 127, 152) !important;">Bedrock Launcher</font></a></li>
+                <li><a href="https://mcapks.net/"><font style="color:rgb(48, 127, 152) !important;">KLPBBS - 我的世界国际版全版本下载</font></a></li>
+                <li><a href="https://mc.minebbs.com/"><font style="color:rgb(48, 127, 152) !important;">MineBBS - MCDL 我的世界国际版下载</font></a></li>
+                <li><a href="https://mcarc.spectrollay.com/minecraft_repository/"><font style="color:rgb(48, 127, 152) !important;">星月 Minecraft 版本库</font></a>（<a href="https://mcarc.spectrollay.com/minecraft_repository_test/"><font style="color:rgb(48, 127, 152) !important;">测试仓库</font></a>）</li>
+                <li><a href="https://xz.mcutc.cn/"><font style="color:rgb(48, 127, 152) !important;">UTCDL</font></a>（已停更）</li>
+                <li><a href="https://bbk.endyun.ltd/main"><font style="color:rgb(48, 127, 152) !important;">Minecraft for Android 版本库</font></a></li>
+            </ul>
+            <h2>手机玩 Java</h2>
+            <h3>FCL</h3>
+            <ul>
+                <li>介绍：<a href="https://fcl-team.github.io/"><font style="color:rgb(48, 127, 152) !important;">https://fcl-team.github.io/</font></a></li>
+                <li>下载站：<a href="https://foldcraftlauncher.cn/"><font style="color:rgb(48, 127, 152) !important;">https://foldcraftlauncher.cn/</font></a></li>
+                <li>GitHub 项目地址：<a href="https://github.com/FCL-Team/FoldCraftLauncher"><font style="color:rgb(48, 127, 152) !important;">https://github.com/FCL-Team/FoldCraftLauncher</font></a></li>
+            </ul>
+            <h3>其他</h3>
+            <p><a href="https://github.com/PojavLauncherTeam">PojavLauncher</a></p>
+            <p><a href="https://github.com/ZalithLauncher/ZalithLauncher">GitHub - ZalithLauncher/ZalithLauncher: Zalith Launcher is a Minecraft launcher developed based on PojavLauncher, capable of running Minecraft: Java Edition on Android devices.</a></p>
+        </div>
+    </div>
+    
+    <!-- 右侧目录边栏 -->
+    <div id="right-sidebar">
+        <h4 id="sidebar-header">
+            <span>快速导航</span>
+            <i id="sidebar-toggle-icon" class="fa-solid fa-chevron-down"></i>
+        </h4>
+        <ul id="sidebar-nav-list">
+            <li><a href="#mods">模组</a></li>
+            <li><a href="#shaders">光影包</a></li>
+            <li><a href="#modpacks">整合包</a></li>
+            <li><a href="#server-cores">服务端核心</a></li>
+            <li><a href="#server-platforms">开服平台</a></li>
+            <li><a href="#server-recommendations">服务器推荐</a></li>
+            <li><a href="#skins">皮肤站</a></li>
+            <li><a href="#related-sites">相关站点</a></li>
+            <li><a href="#chinese-communities">中文社区</a></li>
+            <li><a href="#server-guide">开服&amp;联机指南</a></li>
+            <li><a href="#wiki-tools">Wiki &amp; 工具</a></li>
+            <li><a href="#tech-docs">技术文档</a></li>
+        </ul>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('right-sidebar');
+            const sidebarHeader = document.getElementById('sidebar-header');
+
+            if (sidebar && sidebarHeader) {
+                // Toggle collapse on header click
+                sidebarHeader.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                });
+
+                // Function to auto-collapse on smaller heights
+                const autoCollapse = () => {
+                    // This media query is from the CSS, ensures we only run this when sidebar is visible
+                    if (window.matchMedia('(min-width: 1024px)').matches) {
+                        if (window.innerHeight < 650) { // Threshold for auto-collapse
+                            sidebar.classList.add('collapsed');
+                        }
+                    }
+                };
+
+                autoCollapse(); // Run on page load
+            }
+        });
+    </script>
+</body>
+</html>
